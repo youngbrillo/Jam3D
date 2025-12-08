@@ -35,8 +35,8 @@ project (baseName)
     cppdialect "C++20"
     language "C++"
     kind "ConsoleApp"
-    location "../build/"
-    targetdir "../build/bin/%{cfg.buildcfg}"
+    location "../../build/"
+    targetdir "../../build/bin/%{cfg.buildcfg}"
 
     filter "action:vs*"
         debugdir "$(SolutionDir)"
