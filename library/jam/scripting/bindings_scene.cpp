@@ -32,7 +32,7 @@ void jam::scripting::BindScene(sol::state& lua)
 		, "backgroundColor", &SceneConfig::backgroundColor
 	);
 
-	lua.new_usertype<Scene>("iScene"
+	lua.new_usertype<Scene>("Scene"
 		, "type_id", &entt::type_hash<Scene>::value
 		//, "GetConfig", &iScene::GetConfig
 		, "CreateEntity", &Scene::CreateEntity

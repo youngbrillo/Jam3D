@@ -1,0 +1,25 @@
+name: Shader Sandbox
+resourceDirectory: apps/sandbox/res
+iconPathLocation: logo.png
+version_major: 0
+version_minor: 5
+version_patch: 0
+scene.overridePause: false
+window:
+  width: 1280
+  height: 720
+  monitor: 1
+  configFlags: 36
+  lockFPS: false
+  targetFPS: 120
+activeTemplate: 0
+scene:
+  templateId: 0
+  id: 8AF685E8C36CE486
+  name: Main Scene
+  configPath: scenes/main.scene.yaml
+  scriptPath: scenes/main.scene.lua
+  backgroundColor: 5E7D3EFF
+  resolution: [1280, 720]
+audio:
+  masterVolume: 1

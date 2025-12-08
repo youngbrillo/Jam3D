@@ -1,0 +1,8 @@
+scene:
+  templateId: 0
+  id: 8AF685E8C36CE486
+  name: Main Scene
+  configPath: scenes/main.scene.yaml
+  scriptPath: scenes/main.scene.lua
+  backgroundColor: FF
+  resolution: [1280, 720]
