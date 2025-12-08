@@ -48,7 +48,7 @@ namespace jam
     struct Project
     {
         std::string name = "[Project-name]";
-        std::string resourceDirectory = "app/res";
+        std::string resourceDirectory = "apps/%s/res";
         std::string iconPathLocation = "logo.png";
         std::string fileLocation;
         int version_major = 0;

@@ -15,7 +15,7 @@
  		iApplicationLayer(Application* app) : appRef(app) {}
  		virtual ~iApplicationLayer() { appRef = nullptr; }
 
- 		inline void GetScene(iScene* scene)
+ 		inline void GetScene(Scene* scene)
  		{
  			sceneRef = scene;
  			onSceneStart();
@@ -33,7 +33,7 @@
  		virtual void serialize(std::string configFilepath) = 0;
  		virtual void deserialize(std::string configFilepath) = 0;
  	protected:
- 		iScene* sceneRef = nullptr;
+ 		Scene* sceneRef = nullptr;
  		Application* appRef = nullptr;
  	};
  }

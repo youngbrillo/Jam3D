@@ -1,5 +1,4 @@
 #include "serializeYAML.hpp"
-#include "../../components/base.hpp"
 
 namespace jam::serialization
 {

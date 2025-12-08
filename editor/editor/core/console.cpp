@@ -158,7 +158,7 @@ int jam::strawberry::editor::SceneConsole::TextEditCallback(ImGuiInputTextCallba
     }
     return 0;
 }
-void jam::strawberry::editor::SceneConsole::Draw(const char* title, bool* p_open, jam::iScene* scene)
+void jam::strawberry::editor::SceneConsole::Draw(const char* title, bool* p_open, jam::Scene* scene)
 {
     ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(title, p_open))
@@ -347,7 +347,7 @@ void jam::strawberry::editor::SceneConsole::ExecCommand(const char* command_line
 }
 
 
-void jam::strawberry::editor::SceneConsole::Render(bool* p_open, jam::iScene* scene)
+void jam::strawberry::editor::SceneConsole::Render(bool* p_open, jam::Scene* scene)
 {
 	static SceneConsole console;
 	console.Draw("console", p_open, scene);

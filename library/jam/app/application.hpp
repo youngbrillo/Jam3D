@@ -6,7 +6,7 @@
 
  namespace jam
  {
-     typedef std::function<jam::iScene* (jam::SceneConfig def)> SceneGenFunction;
+     typedef std::function<jam::Scene* (jam::SceneConfig def)> SceneGenFunction;
 
      struct SceneTemplate
      {
@@ -15,9 +15,6 @@
      };
      class Application
      {
-         Project& project;
-         iScene* activeScene;
-         iApplicationLayer* defaultLayer;
      public:
          Application(Project& projectSettings);
          ~Application();
@@ -30,9 +27,9 @@
          void SetScene(jam::SceneConfig scene);
          void RestartScene();
          void ReloadScene();
-         Project& GetProject() { return project; }
-         const std::vector<SceneTemplate>& GetTemplates() const { return templates; }
-         iScene* GetScene() { return activeScene; }
+         Project& GetProject() { return _project; }
+         const std::vector<SceneTemplate>& GetTemplates() const { return _scene_templates; }
+         Scene* GetScene() { return _active_scene; }
 
          //time functions
          const Clock& GetTime();
@@ -45,14 +42,18 @@
          void SlowDown();
          void SetPlaybackSpeed(float value);
      private:
-         iScene* getSceneTemplate(int slot);
+         Scene* getSceneTemplate(int slot);
          void refreshScene();        //stops and starts the active cene
          void reloadScene();         //destroys the active scene and creates a new one
          void poll();
          void update();
          void render();
-         std::vector<SceneTemplate> templates;
-         Clock time;
+     private:
+         Project& _project;
+         Scene* _active_scene;
+         iApplicationLayer* _default_layer;
+         std::vector<SceneTemplate> _scene_templates;
+         Clock _time;
      };
  } // namespace jam::app
 

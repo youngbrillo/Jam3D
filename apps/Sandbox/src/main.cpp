@@ -1,6 +1,7 @@
 
 #include "raylib.h"
 #include <jam/jam3D.hpp>
+#include <jam/modules/core3d/core3d.hpp>
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -16,6 +17,14 @@ int main(void)
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
+    Mesh mesh = GenMeshCube(1, 1, 1);
+
+    jam::components::SceneCamera3D camera;
+    jam::components::CameraEditorComponent camera_editor;
+
+    jam::components::Transform3D transform;
+    jam::components::MeshInstance3D mesh_instance;
+    mesh_instance.mesh = &mesh;
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -24,15 +33,18 @@ int main(void)
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
-
+        if(IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+            UpdateCamera(&camera.camera, camera_editor.mode);
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-
-        ClearBackground(RAYWHITE);
+        ClearBackground(DARKGRAY);
+        BeginMode3D(camera.camera);
+            DrawGrid(30, 1.0f);
+            mesh_instance.Render(transform.toMatrix());
+        EndMode3D();
 
         DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

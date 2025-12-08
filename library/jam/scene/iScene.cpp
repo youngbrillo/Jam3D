@@ -1,8 +1,9 @@
 #include "iScene.hpp"
 //#include "Jam/components/base.hpp"
 #include "jam/modules/core3d/core3d.hpp"
-
 #include "Jam/utils/resourceLoader.hpp"
+#include "jam/serialization/yaml/serializeYAML.hpp"
+
 using namespace jam;
 using namespace jam::components;
 using namespace jam::utils;
@@ -34,23 +35,89 @@ static void on_music_resource_removed(entt::registry& registry, entt::entity e)
     UnloadMusicStream(res);
 }
 
-jam::iScene::iScene(SceneConfig config_)
+jam::Scene::Scene(SceneConfig config_)
     : config(config_)
     , renderTarget(config_.resolution)
 {
-    resources.on_destroy<Texture2D>().connect<&on_texture_resource_removed>();
-    resources.on_destroy<Font>().connect<&on_font_resource_removed>();
-    resources.on_destroy<Sound>().connect<&on_sound_resource_removed>();
-    resources.on_destroy<Music>().connect<&on_music_resource_removed>();
-
 }
 
-jam::iScene::~iScene()
+jam::Scene::~Scene()
 {
-    resources.clear();
 }
 
-Entity jam::iScene::CreateEntity(std::string name, Vector3 position)
+void jam::Scene::Begin()
+{
+    this->onBegin();
+}
+
+void jam::Scene::End()
+{
+    this->onEnd();
+}
+
+void jam::Scene::Poll()
+{
+    this->onPoll();
+}
+
+void jam::Scene::Update(const jam::Clock& time)
+{
+    this->onUpdate(time);
+}
+
+void jam::Scene::FixedUpdate(const jam::Clock& time)
+{
+    this->onFixedUpdate(time);
+}
+
+void jam::Scene::Render()
+{
+    if (renderTarget.enabled)
+    {
+        this->RenderToCanvas();
+        renderTarget.Render();
+    }
+    else
+    {
+        this->RenderContent();
+    }
+}
+
+void jam::Scene::RenderContent()
+{
+    Camera3D& cam = GetCamera();
+    BeginMode3D(cam);
+    this->onRender3DStart(cam);
+    this->onRender3DEnd(cam);
+    EndMode3D();
+    this->onRenderUI(cam);
+}
+
+
+void jam::Scene::RenderToCanvas()
+{
+    renderTarget.Begin(this->config.backgroundColor);
+    RenderContent();
+    renderTarget.End();
+}
+
+void jam::Scene::Serialize()
+{
+}
+
+void jam::Scene::Deserialize()
+{
+}
+
+void jam::Scene::onSerialize(YAML::Emitter& out)
+{
+}
+
+void jam::Scene::onDeserialize(const YAML::Node& node)
+{
+}
+
+Entity jam::Scene::CreateEntity(std::string name, Vector3 position)
 {
     Entity e(world.create(), world);
 
@@ -63,35 +130,35 @@ Entity jam::iScene::CreateEntity(std::string name, Vector3 position)
     return e;
 }
 
-Entity jam::iScene::CreateCube(std::string name, Vector3)
+Entity jam::Scene::CreateCube(std::string name, Vector3)
 {
     return Entity();
 }
 
-Entity jam::iScene::CreateSphere(std::string name, Vector3)
+Entity jam::Scene::CreateSphere(std::string name, Vector3)
 {
     return Entity();
 }
 
-Entity jam::iScene::CreatePlane(std::string name, Vector3)
+Entity jam::Scene::CreatePlane(std::string name, Vector3)
 {
     return Entity();
 }
 
-Entity jam::iScene::CreateDonut(std::string name, Vector3)
+Entity jam::Scene::CreateDonut(std::string name, Vector3)
 {
     return Entity();
 }
 
 
-Entity jam::iScene::CreateCamera(std::string name, Vector3 position, float fov)
+Entity jam::Scene::CreateCamera(std::string name, Vector3 position, float fov)
 {
     Entity e = CreateEntity(name, position);
     e.add<SceneCamera3D>().camera.fovy = fov;
     return e;
 }
 
-Entity jam::iScene::CreateEditorCamera(std::string name, Vector3 position, float fov)
+Entity jam::Scene::CreateEditorCamera(std::string name, Vector3 position, float fov)
 {
     Entity e = CreateCamera(name, position, fov);
     e.add<ActiveCameraTag>();
@@ -100,47 +167,7 @@ Entity jam::iScene::CreateEditorCamera(std::string name, Vector3 position, float
     return e;
 }
 
-UUID jam::iScene::AddTexture(std::string filepath, UUID id)
-{
-    return AddSceneResource<Texture2D>(resources, filepath, LoadTexture, IsTextureValid, id);
-}
-
-Texture2D jam::iScene::GetTexture(UUID id)
-{
-    return GetSceneResource<Texture2D>(resources, id, Texture2D{ 1,1,1 });
-
-}
-
-UUID jam::iScene::AddFont(std::string filepath, UUID id)
-{
-    return AddSceneResource<Font>(resources, filepath, LoadFont, IsFontValid, id);
-}
-
-Font jam::iScene::GetFont(UUID id)
-{
-    return GetSceneResource<Font>(resources, id, GetFontDefault());
-}
-
-UUID jam::iScene::AddSound(std::string filepath, UUID id)
-{
-    return AddSceneResource<Sound>(resources, filepath, LoadSound, IsSoundValid, id);
-}
-
-Sound jam::iScene::GetSound(UUID id)
-{
-    return GetSceneResource<Sound>(resources, id, Sound());
-}
-
-UUID jam::iScene::AddMusic(std::string filepath, UUID id)
-{
-    return AddSceneResource<Music>(resources, filepath, LoadMusicStream, IsMusicValid, id);
-}
-
-Music jam::iScene::GetMusic(UUID id)
-{
-    return GetSceneResource<Music>(resources, id, Music());
-}
-Camera3D& jam::iScene::GetCamera()
+Camera3D& jam::Scene::GetCamera()
 {
     for (auto&& [e, cam, tag] : world.view<SceneCamera3D, ActiveCameraTag>(entt::exclude<DisabledTag>).each())
     {
@@ -156,20 +183,20 @@ Camera3D& jam::iScene::GetCamera()
     return cam.camera.camera;
 }
 
-void jam::iScene::SetResolution(Vector2 resoulution)
+void jam::Scene::SetResolution(Vector2 resoulution)
 {
     config.resolution = resoulution;
     renderTarget.Resize(resoulution);
 }
 
-Vector2 jam::iScene::GetRenderDimensions() const
+Vector2 jam::Scene::GetRenderDimensions() const
 {
     if (renderTarget.enabled)
         return renderTarget.resolution;
     return Vector2{(float)GetScreenWidth(), (float)GetScreenHeight()};
 }
 
-Entity jam::iScene::GetEntityByName(std::string name)
+Entity jam::Scene::GetEntityByName(std::string name)
 {
     for (auto&& [id, tag] : world.view<components::NameTag>().each())
     {

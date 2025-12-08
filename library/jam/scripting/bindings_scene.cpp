@@ -32,27 +32,19 @@ void jam::scripting::BindScene(sol::state& lua)
 		, "backgroundColor", &SceneConfig::backgroundColor
 	);
 
-	lua.new_usertype<iScene>("iScene"
-		, "type_id", &entt::type_hash<iScene>::value
+	lua.new_usertype<Scene>("iScene"
+		, "type_id", &entt::type_hash<Scene>::value
 		//, "GetConfig", &iScene::GetConfig
-		, "CreateEntity", &iScene::CreateEntity
-		, "CreateCube", &iScene::CreateCube
-		, "CreateSphere", &iScene::CreateSphere
-		, "CreatePlane", &iScene::CreatePlane
-		, "CreateDonut", &iScene::CreateDonut
-		, "CreateCamera", &iScene::CreateCamera
-		, "CreateEditorCamera", &iScene::CreateEditorCamera
-		, "AddTexture", &iScene::AddTexture
-		, "GetTexture", &iScene::GetTexture
-		, "AddFont", &iScene::AddFont
-		, "GetFont", &iScene::GetFont
-		, "AddSound", &iScene::AddSound
-		, "GetSound", &iScene::GetSound
-		, "AddMusic", &iScene::AddMusic
-		, "GetMusic", &iScene::GetMusic
-		, "GetEntityByName", &iScene::GetEntityByName
-		, "GetCamera", &iScene::GetCamera
-		, "config", &iScene::config
+		, "CreateEntity", &Scene::CreateEntity
+		, "CreateCube", &Scene::CreateCube
+		, "CreateSphere", &Scene::CreateSphere
+		, "CreatePlane", &Scene::CreatePlane
+		, "CreateDonut", &Scene::CreateDonut
+		, "CreateCamera", &Scene::CreateCamera
+		, "CreateEditorCamera", &Scene::CreateEditorCamera
+		, "GetEntityByName", &Scene::GetEntityByName
+		, "GetCamera", &Scene::GetCamera
+		, "config", &Scene::config
 	);
 
 	//lua.new_usertype<DefaultScene>("DefaultScene"

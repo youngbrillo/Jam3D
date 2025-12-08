@@ -33,7 +33,7 @@ struct Matrix;
             entt::entity nextSib{ entt::null };
         };
  	}
- 	class iScene;
+ 	class Scene;
 
  	class Entity
  	{

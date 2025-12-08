@@ -12,11 +12,11 @@ namespace jam::strawberry::editor
 
 		void ClearLog();
 		void AddLog(const char* fmt, ...);
-		void Draw(const char* title, bool* p_open, jam::iScene* scene);
+		void Draw(const char* title, bool* p_open, jam::Scene* scene);
 		void ExecCommand(const char* command_line, scripting::Script& script);
 		int TextEditCallback(ImGuiInputTextCallbackData* data);
 
-		static void Render(bool* p_open, jam::iScene* scene);
+		static void Render(bool* p_open, jam::Scene* scene);
 	private:
 		char                  InputBuf[256];
 		ImVector<char*>       Items;

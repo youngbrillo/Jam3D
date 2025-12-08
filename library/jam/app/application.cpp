@@ -4,48 +4,48 @@ using namespace jam;
 static jam::Application* s_instance = nullptr;
 
 jam::Application::Application(Project& projectSettings)
-	: project(projectSettings)
-	, activeScene(nullptr)
-    , defaultLayer(nullptr)
+	: _project(projectSettings)
+	, _active_scene(nullptr)
+    , _default_layer(nullptr)
 {
     assert(s_instance == nullptr && "ONLY ONE APPLICATION ALLOWED AT A TIME");
 
-    project.reloadApp = false;
-    project.running = true;
+    _project.reloadApp = false;
+    _project.running = true;
 
-    SetConfigFlags(project.window.configFlags);
+    SetConfigFlags(_project.window.configFlags);
     InitWindow(
-        project.window.width,
-        project.window.height,
-        TextFormat("%s v.%d.%d.%d", project.name.c_str(), project.version_major, project.version_minor, project.version_patch)
+        _project.window.width,
+        _project.window.height,
+        TextFormat("%s v.%d.%d.%d", _project.name.c_str(), _project.version_major, _project.version_minor, _project.version_patch)
     );
-    SetWindowMonitor(project.window.monitor);
-    SetWindowSize(project.window.width, project.window.height);
-    if (project.window.lockFPS)
+    SetWindowMonitor(_project.window.monitor);
+    SetWindowSize(_project.window.width, _project.window.height);
+    if (_project.window.lockFPS)
     {
-        SetTargetFPS(project.window.targetFPS);
+        SetTargetFPS(_project.window.targetFPS);
     }
 
     InitAudioDevice();
-    SetMasterVolume(project.audio.masterVolume);
-    project.onWindowInit();
+    SetMasterVolume(_project.audio.masterVolume);
+    _project.onWindowInit();
     s_instance = this;
-    time.fixedTimeStep = project.physics.hertz;
+    _time.fixedTimeStep = _project.physics.hertz;
 }
 
 jam::Application::~Application()
 {
     s_instance = nullptr;
 
-    if (activeScene) {
-        activeScene->End();
-        delete activeScene;
-        activeScene = nullptr;
+    if (_active_scene) {
+        _active_scene->End();
+        delete _active_scene;
+        _active_scene = nullptr;
     }
-    if (defaultLayer)
+    if (_default_layer)
     {
-        delete defaultLayer;
-        defaultLayer = nullptr;
+        delete _default_layer;
+        _default_layer = nullptr;
     }
     CloseAudioDevice();
     CloseWindow();
@@ -58,12 +58,12 @@ Application* jam::Application::Instance()
 
 void jam::Application::Run()
 {
-    while (project.running)
+    while (_project.running)
     {
-        time.deltaTime = GetFrameTime();
-        time.time += time.deltaTime;
-        time.frameCount++;
-        time.deltaTime *= time.playbackSpeed;
+        _time.deltaTime = GetFrameTime();
+        _time.time += _time.deltaTime;
+        _time.frameCount++;
+        _time.deltaTime *= _time.playbackSpeed;
 
         poll();
         update();
@@ -73,151 +73,151 @@ void jam::Application::Run()
 
 void jam::Application::SetDefaultTemplate(int id)
 {
-    if (id >= 0 && id < templates.size())
-        this->project.scene.activeTemplate = id;
+    if (id >= 0 && id < _scene_templates.size())
+        this->_project.scene.activeTemplate = id;
 }
 
 int jam::Application::AddTemplate(SceneTemplate temp)
 {
-    templates.emplace_back(temp);
+    _scene_templates.emplace_back(temp);
 
-    return templates.size() - 1;
+    return _scene_templates.size() - 1;
 }
 
 void jam::Application::SetDefaultLayer(iApplicationLayer* layer)
 {
-    if (defaultLayer)
+    if (_default_layer)
     {
-        defaultLayer->FreeScene();
-        delete defaultLayer;
-        defaultLayer = nullptr;
+        _default_layer->FreeScene();
+        delete _default_layer;
+        _default_layer = nullptr;
     }
 
-    defaultLayer = layer;
-    if (activeScene)
-        defaultLayer->GetScene(activeScene);
+    _default_layer = layer;
+    if (_active_scene)
+        _default_layer->GetScene(_active_scene);
 }
 
 void jam::Application::SetScene(jam::SceneConfig def)
 {
-    project.scene.definition = def;
-    project.scene.reloadScene = true;
+    _project.scene.definition = def;
+    _project.scene.reloadScene = true;
 }
 void jam::Application::RestartScene()
 {
-    project.scene.resetScene = true;
+    _project.scene.resetScene = true;
 }
 void jam::Application::ReloadScene()
 {
-    project.scene.reloadScene = true;
+    _project.scene.reloadScene = true;
 }
 const Clock& jam::Application::GetTime()
 {
-    return time;
+    return _time;
 }
 bool jam::Application::isPaused() const
 {
-    return time.state == TIME_STATE_PAUSED;
+    return _time.state == TIME_STATE_PAUSED;
 }
 void jam::Application::Pause()
 {
-    time.SetState(TIME_STATE_PAUSED);
+    _time.SetState(TIME_STATE_PAUSED);
 }
 void jam::Application::Resume()
 {
-    time.SetState(TIME_STATE_PLAY);
+    _time.SetState(TIME_STATE_PLAY);
 }
 void jam::Application::FastForwardx2()
 {
-    time.SetState(TIME_STATE_FAST_FORWARD_X2);
+    _time.SetState(TIME_STATE_FAST_FORWARD_X2);
 }
 void jam::Application::FastForwardx4()
 {
-    time.SetState(TIME_STATE_FAST_FORWARD_X4);
+    _time.SetState(TIME_STATE_FAST_FORWARD_X4);
 }
 void jam::Application::SlowDown()
 {
-    time.SetState(TIME_STATE_HALF);
+    _time.SetState(TIME_STATE_HALF);
 }
 void jam::Application::SetPlaybackSpeed(float value)
 {
     value = value < 0 ? 0 : value;
-    time.SetState(TIME_STATE_CUSTOM, value);
+    _time.SetState(TIME_STATE_CUSTOM, value);
 }
-iScene* jam::Application::getSceneTemplate(int slot)
+Scene* jam::Application::getSceneTemplate(int slot)
 {
-    if (slot < 0 || slot >= templates.size())
-        slot = project.scene.activeTemplate;
+    if (slot < 0 || slot >= _scene_templates.size())
+        slot = _project.scene.activeTemplate;
     //return templates[project.scene.activeTemplate].generator(project.scene.definition);;
 
-    project.scene.currentTemplate = slot;
-    return templates[slot].generator(project.scene.definition);
+    _project.scene.currentTemplate = slot;
+    return _scene_templates[slot].generator(_project.scene.definition);
 }
 
 void jam::Application::refreshScene()
 {
-    project.scene.resetScene = false;
+    _project.scene.resetScene = false;
     TraceLog(TraceLogLevel::LOG_INFO, "[App]\tReloading Scene!");
-    if (activeScene)
+    if (_active_scene)
     {
-        if (defaultLayer) defaultLayer->FreeScene();
-        activeScene->End();
-        activeScene->Begin();
-        project.scene.definition = activeScene->config;
-        if (defaultLayer) defaultLayer->GetScene(activeScene);
+        if (_default_layer) _default_layer->FreeScene();
+        _active_scene->End();
+        _active_scene->Begin();
+        _project.scene.definition = _active_scene->config;
+        if (_default_layer) _default_layer->GetScene(_active_scene);
     }
 }
 
 void jam::Application::reloadScene()
 {
-    project.scene.reloadScene = false;
-    if (activeScene)
+    _project.scene.reloadScene = false;
+    if (_active_scene)
     {
-        TraceLog(TraceLogLevel::LOG_INFO, "[App]\tDestroying Scene!\t %s", activeScene->config.name.c_str());
-        if (defaultLayer) defaultLayer->FreeScene();
-        activeScene->End();
-        delete activeScene;
-        activeScene = nullptr;
+        TraceLog(TraceLogLevel::LOG_INFO, "[App]\tDestroying Scene!\t %s", _active_scene->config.name.c_str());
+        if (_default_layer) _default_layer->FreeScene();
+        _active_scene->End();
+        delete _active_scene;
+        _active_scene = nullptr;
     }
-    TraceLog(TraceLogLevel::LOG_INFO, "[App]\tCreating Scene!\t %s", project.scene.definition.name.c_str());
-    assert(templates.size() > 0 && "There must be atleast one template for the application!");
-    activeScene = getSceneTemplate(project.scene.definition.templateId);
-    activeScene->Begin();
-    project.scene.definition = activeScene->config;
-    if (defaultLayer) defaultLayer->GetScene(activeScene);
+    TraceLog(TraceLogLevel::LOG_INFO, "[App]\tCreating Scene!\t %s", _project.scene.definition.name.c_str());
+    assert(_scene_templates.size() > 0 && "There must be atleast one template for the application!");
+    _active_scene = getSceneTemplate(_project.scene.definition.templateId);
+    _active_scene->Begin();
+    _project.scene.definition = _active_scene->config;
+    if (_default_layer) _default_layer->GetScene(_active_scene);
 }
 
 void jam::Application::poll()
 {
     if (WindowShouldClose())
     {
-        project.running = false;
+        _project.running = false;
     }
-    if (defaultLayer) defaultLayer->poll();
+    if (_default_layer) _default_layer->poll();
 
-    if (project.scene.resetScene)
+    if (_project.scene.resetScene)
         refreshScene();
-    if (project.scene.reloadScene)
+    if (_project.scene.reloadScene)
         reloadScene();
 
-    if (activeScene) activeScene->Poll();
+    if (_active_scene) _active_scene->Poll();
 }
 
 void jam::Application::update()
 {
-    if (defaultLayer) defaultLayer->update(time.deltaTime);
+    if (_default_layer) _default_layer->update(_time.deltaTime);
 
     //perhaps let the user override this with project settings?
-    if (isPaused() && !project.scene.overridePause)
+    if (isPaused() && !_project.scene.overridePause)
         return;
 
-    if (activeScene) activeScene->Update(time);
+    if (_active_scene) _active_scene->Update(_time);
 
-    time.fixedTimer += time.deltaTime;
-    if (time.fixedTimer>= time.fixedTimeStep)
+    _time.fixedTimer += _time.deltaTime;
+    if (_time.fixedTimer>= _time.fixedTimeStep)
     {
-        time.fixedTimer = 0.0f;
-        if (activeScene) activeScene->FixedUpdate(time);
+        _time.fixedTimer = 0.0f;
+        if (_active_scene) _active_scene->FixedUpdate(_time);
 
     }
 }
@@ -225,11 +225,11 @@ void jam::Application::update()
 void jam::Application::render()
 {
     BeginDrawing();
-    ClearBackground(activeScene ? project.scene.drawScene == false ? BLACK : activeScene->config.backgroundColor : BLACK);
-    if (activeScene && project.scene.drawScene)
+    ClearBackground(_active_scene ? _project.scene.drawScene == false ? BLACK : _active_scene->config.backgroundColor : BLACK);
+    if (_active_scene && _project.scene.drawScene)
     {
-        activeScene->Render();
+        _active_scene->Render();
     }
-    if (defaultLayer) defaultLayer->render();
+    if (_default_layer) _default_layer->render();
     EndDrawing();
 }
