@@ -1,0 +1,15 @@
+header: [D60AC072D6E692A3, "texture", resource/textures/checkered.txtr.yaml]
+resource: 
+  id: D60AC072D6E692A3
+  type: texture
+  name: Checkered-White-Black
+  texture:
+    type: 4
+    width: 32
+    height: 32
+    checksX: 8
+    checksY: 8  
+    primary: FFFFFFFF
+    secondary: 000000FF
+    filter: 0
+    wrap: 0

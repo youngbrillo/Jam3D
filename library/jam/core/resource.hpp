@@ -4,7 +4,6 @@
 #include "uuid.hpp"
 #include "iVec2.hpp"
 
-
 namespace YAML {
 	class Emitter;
 	class Node;
@@ -13,6 +12,23 @@ namespace YAML {
 namespace jam
 {
 	using ResourceID = jam::UUID;
+
+	enum ResourceType
+	{
+		ResourceType_Null = 0,
+		ResourceType_Texture = 1 << 1,
+		ResourceType_mesh = 1 << 2,
+		ResourceType_Shader = 1 << 3,
+		ResourceType_Font = 1 << 4,
+		ResourceType_Sound = 1 << 5,
+		ResourceType_Music = 1 << 6,
+		ResourceType_RenderBuffer = 1 << 7,
+	};
+	enum ResourceTag {
+		ResourceTag_Invalid = 0,	//this is an invalid resource (corrupted, can't be found, invalid, etc)
+		ResourceTag_Unloaded = 1,	//this is a valid resource, but it has not been loaded into the gpu
+		ResourceTag_InMemory = 2,	//this is a valid resource, and it has been loaded unto the gpu
+	};
 	enum MeshPrimative
 	{
 		MeshPrimative_null = -1,
@@ -45,93 +61,92 @@ namespace jam
 		ImagePrimative_Import = 9,
 	};
 
-	struct ImageResource
-	{
-		ImagePrimative type;
-		std::string name;
-		jam::iVec2 size;
-		Color primary, secondary;
-		int direction;		//gradient: linear
-		float density;		//gradient: radial/square
-		jam::iVec2 check;
-		struct {
-			float factor;	//white
-			int offsetX;	//perline
-			int offsetY;	//perlin
-		} noise;			//white/perlin
 
+	struct ImageGenParam
+	{
+		int type;
+		int width, height;
+		Color primary, secondary;
+		int direction;			//gradient: linear
+		float density;			//gradient: radial/square
+		int checksX, checksY;
+		float factor;
+		int offsetX, offsetY;
+		float scale;
 		int tileSize;		//cellular
 		std::string text;	//image text
-		std::string importPath; //imported image
+		std::string filepath; //imported image
+		int filter = TEXTURE_FILTER_POINT;
+		int wrap = TEXTURE_WRAP_REPEAT;
 	};
 
-	struct MeshResource
+	Image ImageGenParam_Generate(const ImageGenParam& generator);
+	struct MeshGenParam
 	{
-		MeshPrimative type;
+		int type;
+		int sides;
+		float width, height, length;
+		int resX, resY;
+		float radius;
+		int rings, slices;
+		int radSeg;
+		float size;
+		ImageGenParam imageGenParameters;
+	};
+	
+	struct Resource
+	{
+		ResourceID id = 0;
+		std::string filepath;
 		std::string name;
-		Vector3 dimensions;
-		jam::iVec2 res;
-		struct
-		{
-			float radius;
-			int rings;		// Sphere| Hemisphere 
-			int slices;		// Sphere| Hemisphere | Cylinder
-			float size;		// Torus | Knot	
-			int radSeg;		// Torus | Knot	
-			int sides;		// Poly | Torus | Knot	
-		} round;			//Sphere | Hemisphere | Cylinder | Cone
+		int type = ResourceType::ResourceType_Null;
+		int tag = ResourceTag::ResourceTag_Invalid;
 
-		struct {
-			ImageResource image;
-			Vector3 size;
-		} map;				//Heightmap | Cubicmap
+		void serialize_as_header(YAML::Emitter& out);
+		void deserialize_as_header(YAML::Node& root);
 
+		inline bool is_valid() const {
+			return type != ResourceType_Null && tag == ResourceTag_InMemory;
+		}
 
-		ResourceID AlbedoTextureID = 0;
-		ResourceID SpecularTextureID = 0;
-		ResourceID NormalTextureID = 0;
-		std::string importPath;
+		inline operator bool() const { return is_valid(); }
 	};
-	enum ShaderType
+
+	struct TextureResource : public Resource
 	{
-		ShaderType_Null = -1,
-		ShaderType_Screenspace = 0,
-		ShaderType_Object = 1,
+		Texture2D res = { 0 };
+		ImageGenParam parameters;
+		operator const Texture2D& () const { return res; }
+
+		bool Load(std::string filepath);
+		bool Load(Image image);
+		bool isValid() const;
+		void Unload();
 	};
 
-	enum ShaderFormat
+	struct ModelResource : public Resource
 	{
-		ShaderFormat_File = 0,
-		ShaderFormat_Inline = 1,
+		Model res = { 0 };
+		MeshGenParam parameters;
+		operator const Model& () const { return res; }
+
+		bool Load(std::string filepath);
+		bool Load(Mesh mesh);
+		bool isValid() const;
+		void Unload();
 	};
 
-	struct ShaderResource
+	struct ShaderResource : public Resource
 	{
-		int type = ShaderType_Null;
-		int format = ShaderFormat_File;
-		std::string vertexLocation;
-		std::string fragmentLocation;
-		std::string name;
-		Shader shader;
-		struct {
-			int time_loc = -1;
-			int view_loc = -1;
-		} uniforms;
-		bool Reload();
+		Shader res = { 0 };
+		std::string vertex, fragment;
+		bool is_external = true;
+		operator const Shader& () const { return res; }
+
+		bool Load(std::string filepath);
+		bool Load(Mesh mesh);
+		bool isValid() const;
+		void Unload();
+		void Reload();
 	};
-
-
-	Image generate_image(ImageResource res);
-	Mesh generate_mesh(MeshResource res);
-
-	ImageResource load_image_resource(const std::string& file, ResourceID* id);
-	ImageResource load_image_resource(YAML::Node node, ResourceID* id);
-
-	MeshResource load_mesh_resource(const std::string& file, ResourceID* id);
-	MeshResource load_mesh_resource(YAML::Node node, ResourceID* id);
-
-
-	ShaderResource load_shader_resource(const std::string& file, ResourceID* id);
-	ShaderResource load_shader_resource(YAML::Node node, ResourceID* id);
-
 }

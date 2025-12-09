@@ -1,0 +1,7 @@
+id: BFCC1E1606005331
+entity: 
+  name: ["Orbiter", true, true]
+  Transform3D: [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1]
+  meshInstance: [AC0FA6B842CD2964, 4A343406A9B944C6]
+  script: ["scripts/orbiter.lua", {}]
+  
