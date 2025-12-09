@@ -11,6 +11,9 @@ namespace jam
 		//populate the resource repo
 		static void Startup(std::string cachefile);
 
+		//initialize default resources
+		void initDefaults();
+
 		static void UpdateShaders(const Camera3D& camera, float totalTime);
 
 		//unload all resources
@@ -19,42 +22,29 @@ namespace jam
 
 		ResourceID FindResource(std::string fileOrAlias);
 
-		ResourceID Load_Texture(std::string file);
-		ResourceID Load_Model(std::string file);
-		ResourceID Load_Resource(std::string file);
+		ResourceID			Load_Texture(std::string file);
+		TextureResource*		Get_Texture(ResourceID id);
+		TextureResource*		Get_Or_LoadTexture(ResourceID rid, std::string fileLocation = "");
 
-		Texture2D	Get_Texture(ResourceID id);
-		Model* Get_Model(ResourceID id);
 
-		Texture2D   Get_Or_LoadTexture(ResourceID rid, std::string fileLocation = "");
-		Model* Get_Or_LoadModel(ResourceID rid, std::string fileLocation = "");
-
-		ResourceID			Load_Shader(std::string file);
-		ShaderResource& Get_Shader(ResourceID id);
-		ShaderResource& Get_Or_LoadShader(ResourceID id, std::string fileLocation = "");
-
-		ImageResource* Get_ImageResource(ResourceID id);
-		MeshResource* Get_MeshResource(ResourceID id);
-		ShaderResource* Get_ShaderResource(ResourceID id);
+		ResourceID			Load_Mesh(std::string file);
+		ModelResource*		Get_Mesh(ResourceID id);
+		ModelResource*		Get_Or_LoadMesh(ResourceID rid, std::string fileLocation = "");
 	private:
 		ResourceManager();
 		~ResourceManager();
 		ResourceManager(const ResourceManager&) = delete;
 		ResourceID _load_resource(std::string file, ResourceID* tracked);
 		ResourceID _load_texture(std::string file, ResourceID* tracked);
-		ResourceID _load_model(std::string file, ResourceID* tracked);
-		ResourceID _load_shader(std::string file, ResourceID* tracked);
+		ResourceID _load_mesh(std::string file, ResourceID* tracked);
 
 		static ResourceManager* _instance;
-		std::unordered_map<ResourceID, Texture2D> textures;
-		std::unordered_map<ResourceID, Model> models;
-		std::unordered_map<ResourceID, ShaderResource> shaders;
-		std::unordered_map<ResourceID, ImageResource> generatedImages;
-		std::unordered_map<ResourceID, MeshResource> generatedMeshes;
-		std::unordered_map<std::string, ResourceID> resourceLocations;
-		std::unordered_map<ResourceID, std::string> resourceRepo;
+		std::unordered_map<ResourceID, TextureResource> textures;
+		std::unordered_map<ResourceID, ModelResource> meshes;
+		std::unordered_map<ResourceID, Resource> resources;
 
-		friend class EditorLite;
+		ResourceID _default_res_id = 0;
+		friend class Editor;
 	};
 
 }

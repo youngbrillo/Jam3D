@@ -4,5 +4,10 @@ scene:
   name: Main Scene
   configPath: scenes/main.scene.yaml
   scriptPath: scenes/main.scene.lua
-  backgroundColor: FF
+  backgroundColor: 5E7D3EFF
   resolution: [1280, 720]
+entities:
+  - entity: 
+      handle: ["mr. cube", true, true]
+      Transform3D: [0, 0.5, 0, 1, 1, 1, 0, 0, 0, 1, 1]
+      MeshInstance3D: [0, 0]

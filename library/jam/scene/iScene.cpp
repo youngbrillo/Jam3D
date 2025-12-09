@@ -1,39 +1,14 @@
 #include "iScene.hpp"
-//#include "Jam/components/base.hpp"
 #include "jam/modules/core3d/core3d.hpp"
-#include "Jam/utils/resourceLoader.hpp"
-#include "jam/serialization/yaml/serializeYAML.hpp"
-
-using namespace jam;
-using namespace jam::components;
-using namespace jam::utils;
+#include "jam/modules/ui/ui.hpp"
+#include "jam/serialization/yaml/serializeScene.hpp"
+#include "jam/core/resourceManager.hpp"
 
 #define _MAX(a, b) ((a)>(b)? (a) : (b))
 #define _MIN(a, b) ((a)<(b)? (a) : (b))
 
-static void on_texture_resource_removed(entt::registry& registry, entt::entity e)
-{
-    Texture2D texture = registry.get<Texture2D>(e);
-    UnloadTexture(texture);
-}
-
-static void on_font_resource_removed(entt::registry& registry, entt::entity e)
-{
-    Font res = registry.get<Font>(e);
-    UnloadFont(res);
-}
-
-static void on_sound_resource_removed(entt::registry& registry, entt::entity e)
-{
-    Sound res = registry.get<Sound>(e);
-    UnloadSound(res);
-}
-
-static void on_music_resource_removed(entt::registry& registry, entt::entity e)
-{
-    Music res = registry.get<Music>(e);
-    UnloadMusicStream(res);
-}
+using namespace jam;
+using namespace jam::components;
 
 jam::Scene::Scene(SceneConfig config_)
     : config(config_)
@@ -47,6 +22,13 @@ jam::Scene::~Scene()
 
 void jam::Scene::Begin()
 {
+    YAML::Node root = LoadYamlFile(config.configPath);
+    if (root)
+    {
+        serialization::DeserializeScene(root, this);
+        this->onDeserialize(root);
+    }
+
     this->onBegin();
 }
 
@@ -85,9 +67,21 @@ void jam::Scene::Render()
 
 void jam::Scene::RenderContent()
 {
+    using namespace jam::components;
+
     Camera3D& cam = GetCamera();
     BeginMode3D(cam);
     this->onRender3DStart(cam);
+
+    DrawGrid(50, 1.0f);
+
+    auto view = world.view<Transform3D, MeshInstance3D>(entt::exclude<HiddenTag>);
+
+    for (auto&& [id, transform, mesh] : view.each())
+    {
+        mesh.Render(transform.toMatrix());
+    }
+
     this->onRender3DEnd(cam);
     EndMode3D();
     this->onRenderUI(cam);

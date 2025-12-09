@@ -6,7 +6,9 @@ namespace jam::components
 {
 	struct MeshInstance3D
 	{
-		UUID id = 0;
+		UUID mesh_id = 0;
+		UUID material_id = 0;
+
 		Mesh* mesh = nullptr;
 		Material material = LoadMaterialDefault();
 

@@ -57,7 +57,7 @@ namespace YAML
 			if (!node.IsSequence() || node.size() < 3)
 				return false;
 
-			v.id = node[0].as<uint64_t>();
+			v.id = node[0].as<jam::UUID>();
 			v.type = ResourceType_FromString(node[1].as<std::string>());
 			v.filepath = node[2].as<std::string>();
 		}

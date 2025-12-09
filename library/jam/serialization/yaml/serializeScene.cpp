@@ -1,11 +1,11 @@
 #include "serializeScene.hpp"
+#include "serializeEntity.hpp"
 
 namespace yml = YAML;
 void jam::serialization::SerializeScene(YAML::Emitter& out, Scene* scene)
 {
 	out << yml::BeginMap;
 		SerializeSceneConfig(out, scene->config);
-		SerializeScene_Resources(out, scene);
 		SerializeScene_Entities(out, scene);
 	out << yml::EndMap;
 }
@@ -26,10 +26,6 @@ void jam::serialization::SerializeSceneConfig(YAML::Emitter& out, SceneConfig& d
 	out << yml::EndMap;
 }
 
-void jam::serialization::SerializeScene_Resources(YAML::Emitter& out, Scene* scene)
-{
-}
-
 void jam::serialization::SerializeScene_Entities(YAML::Emitter& out, Scene* scene)
 {
 }
@@ -42,7 +38,6 @@ void jam::serialization::DeserializeScene(YAML::Node root, Scene* scene)
 		return;
 	}
 	DeserializeSceneConfig(root["scene"], scene->config);
-	DeserializeScene_Resources(root["resources"], scene);
 	DeserializeScene_Entities(root["entities"], scene);
 }
 
@@ -59,10 +54,17 @@ void jam::serialization::DeserializeSceneConfig(YAML::Node in, SceneConfig& conf
 	readValueEx(in["resolution"], &config.resolution);
 }
 
-void jam::serialization::DeserializeScene_Resources(YAML::Node in, Scene* scene)
-{
-}
 
 void jam::serialization::DeserializeScene_Entities(YAML::Node in, Scene* scene)
 {
+	if (in.IsNull())
+		return;
+
+	for (auto child : in)
+	{
+		auto node = child["entity"];
+		Entity e(scene->world.create(), scene->world);
+		DeserializeEntity(node, e);
+	}
 }
+
