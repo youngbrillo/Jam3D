@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include <jam/jam3D.hpp>
 #include <jam/modules/core3d/core3d.hpp>
+#include "logger/customLogger.hpp"
 
 
 static jam::Scene* GenBaseScene(jam::SceneConfig config)
@@ -12,6 +13,7 @@ static jam::Scene* GenBaseScene(jam::SceneConfig config)
 
 int main(int argv, char** args)
 {
+    SetTraceLogCallback(CustomLogger);
     using namespace jam;
     Project project;
     project.Load("apps/sandbox/res/project.res.yaml");
