@@ -1,0 +1,14 @@
+header: [59C08E27A30E3792, "texture", resource/textures/perlin-noise.txtr.yaml]
+resource: 
+  id: 59C08E27A30E3792
+  type: texture
+  name: Simple Perlin Noise
+  texture:
+    type: 6
+    width: 128
+    height: 128
+    offsetX: 0
+    offsetY: 0  
+    factor: 1.5
+    filter: 1
+    wrap: 0

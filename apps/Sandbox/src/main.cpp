@@ -19,18 +19,17 @@ int main(int argv, char** args)
     Project project;
     project.Load("apps/sandbox/res/project.res.yaml");
     
-    ResourceManager::Startup("resource/resource.db.yaml");
     do {
+        ResourceManager::Startup("resource/resource.db.yaml");
         Application app(project);
         ResourceManager::Get().initDefaults();
         app.SetDefaultLayer(new editor::EditorLayer);
         app.SetDefaultTemplate(app.AddTemplate(SceneTemplate{ .name = "scene", .generator = GenBaseScene }));
         app.SetScene(project.scene.definition);
         app.Run();
-
+        ResourceManager::Shutdown();
     } while (project.reloadApp);
 
-    ResourceManager::Shutdown();
     project.Save("project.res.yaml");
 
 
