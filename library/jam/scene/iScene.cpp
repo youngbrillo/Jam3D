@@ -35,6 +35,22 @@ void jam::Scene::Begin()
 void jam::Scene::End()
 {
     this->onEnd();
+
+    //recycle editor camera if editor camera is used...
+    components::EditorCamera temp;
+    bool useTemp = false;
+    if (world.ctx().contains<components::EditorCamera>())
+    {
+        temp = world.ctx().get<components::EditorCamera>();
+        useTemp = true;
+    }
+    world.clear();
+    world = entt::registry();
+
+    if (useTemp)
+    {
+        world.ctx().emplace<components::EditorCamera>(temp);
+    }
 }
 
 void jam::Scene::Poll()
@@ -44,7 +60,11 @@ void jam::Scene::Poll()
 
 void jam::Scene::Update(const jam::Clock& time)
 {
+
     this->onUpdate(time);
+
+    auto culled = world.view<DeleteTag>();
+    world.destroy(culled.begin(), culled.end());
 }
 
 void jam::Scene::FixedUpdate(const jam::Clock& time)

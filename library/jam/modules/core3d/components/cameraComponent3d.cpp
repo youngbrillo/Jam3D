@@ -1,5 +1,6 @@
 #include "cameraComponent3d.hpp"
 #include "transform3d.hpp"
+#include "jam/app/application.hpp"
 
 jam::components::SceneCamera3D::SceneCamera3D()
 {
@@ -13,9 +14,15 @@ jam::components::SceneCamera3D::SceneCamera3D()
 
 void jam::components::CameraEditorComponent::Update(Transform3D& transform, Camera3D& camera, const Clock& clock)
 {
-	
+	camera.position = camera.position;
+	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+	{
+		UpdateCamera(&camera, mode);
+	}
+	transform.position = camera.position;
 }
 
 void jam::components::EditorCamera::Update()
 {
+	editor.Update(transform, camera.camera, Application::Instance()->GetTime());
 }
