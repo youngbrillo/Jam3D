@@ -4,6 +4,7 @@
 #include <jam/modules/core3d/core3d.hpp>
 #include "logger/customLogger.hpp"
 #include <jam/core/resourceManager.hpp>
+#include "editor/editorLayer.hpp"
 
 static jam::Scene* GenBaseScene(jam::SceneConfig config)
 {
@@ -22,9 +23,9 @@ int main(int argv, char** args)
     do {
         Application app(project);
         ResourceManager::Get().initDefaults();
+        app.SetDefaultLayer(new editor::EditorLayer);
         app.SetDefaultTemplate(app.AddTemplate(SceneTemplate{ .name = "scene", .generator = GenBaseScene }));
         app.SetScene(project.scene.definition);
-
         app.Run();
 
     } while (project.reloadApp);
