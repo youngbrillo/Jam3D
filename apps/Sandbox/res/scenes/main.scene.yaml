@@ -30,5 +30,5 @@ entities:
   - entity: 
       handle: ["Intro Text", true, true]
       Transform2D: [0, 670, 1280, 50, 0, 0, 1.0, 0]
-      UIPanel: [0, [0, 0, 64, 64, 0,0,0,0,0], 0000007f, true]
+      UIPanel: [0, [0, 0, 64, 64, 0,0,0,0,0], 7F, true]
       UIText: [0, "Welcome to the Cube Sandbox!", [-10, -20], 20, 1.0, 0.0, FFFFFFFF, true]
