@@ -95,15 +95,29 @@ void jam::Scene::RenderContent()
 
     DrawGrid(50, 1.0f);
 
-    auto view = world.view<Transform3D, MeshInstance3D>(entt::exclude<HiddenTag>);
+    auto mesh_view = world.view<Transform3D, MeshInstance3D>(entt::exclude<HiddenTag>);
 
-    for (auto&& [id, transform, mesh] : view.each())
+    for (auto&& [id, transform, mesh] : mesh_view.each())
     {
         mesh.Render(transform.toMatrix());
     }
 
     this->onRender3DEnd(cam);
     EndMode3D();
+
+    auto panel_view = world.view<Transform2D, UIPanel>();
+    auto text_view = world.view<Transform2D, UIText>();
+
+    for (auto&& [id, transform, drawable] : panel_view.each())
+    {
+        drawable.Render(transform);
+    }
+
+    for (auto&& [id, transform, drawable] : text_view.each())
+    {
+        drawable.Render(transform.position, transform.angle);
+    }
+
     this->onRenderUI(cam);
 }
 

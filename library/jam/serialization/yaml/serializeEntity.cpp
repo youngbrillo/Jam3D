@@ -1,11 +1,35 @@
 #include "serializeEntity.hpp"
 #include "jam/modules/core3d/core3d.hpp"
+#include "jam/modules/ui/ui.hpp"
 #include "jam/core/resourceManager.hpp"
 
 using namespace jam::components;
 
 namespace YAML
 {
+    template<>
+    struct convert<Transform2D>
+    {
+        static Node encode(const Transform2D& rhs) {
+            Node node;
+            node.push_back(rhs.position.x); node.push_back(rhs.position.y); 
+            node.push_back(rhs.size.x); node.push_back(rhs.size.y); 
+            node.push_back(rhs.origin.x); node.push_back(rhs.origin.y);
+            node.push_back(rhs.scale);
+            node.push_back(rhs.angle);
+            return node;
+        }
+        static bool decode(const Node& node, Transform2D& rhs) {
+            if (!node.IsSequence() || node.size() < 7)
+                return false;
+            rhs.position.x  = node[0].as<float>(); rhs.position.y   = node[1].as<float>(); 
+            rhs.size.x      = node[2].as<float>(); rhs.size.y       = node[3].as<float>();
+            rhs.origin.x    = node[4].as<float>(); rhs.origin.y     = node[5].as<float>();
+            rhs.scale       = node[6].as<float>(); rhs.angle        = node[7].as<float>();
+            return true;
+        }
+    };
+
     template<>
     struct convert<Transform3D>
     {
@@ -47,6 +71,64 @@ namespace YAML
             return true;
         }
     };
+
+
+    template<>
+    struct convert<UIPanel>
+    {
+        static Node encode(const UIPanel& rhs) {
+            Node node;
+            node.push_back(rhs.id);
+            node.push_back(rhs.npatch);
+            node.push_back(rhs.tint);
+            node.push_back(rhs.visible);
+            return node;
+        }
+        static bool decode(const Node& node, UIPanel& rhs) {
+            if (!node.IsSequence() || node.size() < 3)
+                return false;
+            rhs.id      = node[0].as<jam::UUID>();
+            rhs.npatch  = node[1].as<NPatchInfo>();
+            rhs.tint    = node[2].as<Color>();
+            jam::readValueEx(node[3], &rhs.visible);
+            return true;
+        }
+    };
+
+    template<>
+    struct convert<UIText>
+    {
+        static Node encode(const UIText& rhs) {
+            Node node;
+            node.push_back(rhs.id);
+            node.push_back(rhs.text);
+            node.push_back(rhs.origin);
+            node.push_back(rhs.fontSize);
+            node.push_back(rhs.spacing);
+            node.push_back(rhs.rotation);
+            node.push_back(rhs.tint);
+            node.push_back(rhs.visible);
+            return node;
+        }
+        static bool decode(const Node& node, UIText& rhs) {
+            if (!node.IsSequence())
+                return false;
+
+            jam::readValueEx(node[0], &rhs.id);
+            jam::readValueEx(node[1], &rhs.text);
+            jam::readValueEx(node[2], &rhs.origin);
+            jam::readValueEx(node[3], &rhs.fontSize);
+            jam::readValueEx(node[4], &rhs.spacing);
+            jam::readValueEx(node[5], &rhs.rotation);
+            jam::readValueEx(node[6], &rhs.tint);
+            jam::readValueEx(node[7], &rhs.visible);
+
+            return true;
+        }
+    };
+
+
+
     static YAML::Emitter& operator<<(YAML::Emitter& out, const Transform3D& v)
     {
         out << YAML::Flow << YAML::BeginSeq
@@ -57,6 +139,17 @@ namespace YAML
             << YAML::EndSeq;
         return out;
     }
+    static YAML::Emitter& operator<<(YAML::Emitter& out, const Transform2D& v)
+    {
+        out << YAML::Flow << YAML::BeginSeq
+            << v.position.x << v.position.y 
+            << v.size.x << v.size.y 
+            << v.origin.x << v.origin.y 
+            << v.scale
+            << v.angle
+            << YAML::EndSeq;
+        return out;
+    }
 
     static YAML::Emitter& operator<<(YAML::Emitter& out, const MeshInstance3D& v)
     {
@@ -64,6 +157,31 @@ namespace YAML
             << v.mesh_id
             << v.material_id
             << v.material.maps[0].color
+            << YAML::EndSeq;
+        return out;
+    }
+
+    static YAML::Emitter& operator<<(YAML::Emitter& out, const UIPanel& v)
+    {
+        out << YAML::Flow << YAML::BeginSeq
+            << v.id
+            << v.npatch
+            << v.tint
+            << v.visible
+            << YAML::EndSeq;
+        return out;
+    }
+    static YAML::Emitter& operator<<(YAML::Emitter& out, const UIText& v)
+    {
+        out << YAML::Flow << YAML::BeginSeq
+            << v.id
+            << v.text
+            << v.origin
+            << v.fontSize
+            << v.spacing
+            << v.rotation
+            << v.tint
+            << v.visible
             << YAML::EndSeq;
         return out;
     }
@@ -123,4 +241,35 @@ void jam::serialization::DeserializeEntity(YAML::Node in, Entity& e)
     }
 
 
+    if (auto node = in["Transform2D"])
+    {
+        auto& component = e.add<components::Transform2D>();
+        readValueEx(node, &component);
+    }
+
+    if (auto node = in["UIPanel"])
+    {
+        auto& component = e.add<components::UIPanel>();
+        readValueEx(node, &component);
+
+        auto* texture_resource = rm.Get_Or_LoadTexture(component.id);
+        if (texture_resource)
+        {
+            component.texture = texture_resource->res;
+        }
+    }
+
+    if (auto node = in["UIText"])
+    {
+        auto& component = e.add<components::UIText>();
+        readValueEx(node, &component);
+
+        // todo: add Font to resource loader
+        
+        //auto* texture_resource = rm.Get_Or_LoadTexture(component.id);
+        //if (texture_resource)
+        //{
+        //    component.texture = texture_resource->res;
+        //}
+    }
 }
