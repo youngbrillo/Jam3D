@@ -92,9 +92,6 @@ void jam::Scene::RenderContent()
     Camera3D& cam = GetCamera();
     BeginMode3D(cam);
     this->onRender3DStart(cam);
-
-    DrawGrid(50, 1.0f);
-
     auto mesh_view = world.view<Transform3D, MeshInstance3D>(entt::exclude<HiddenTag>);
 
     for (auto&& [id, transform, mesh] : mesh_view.each())

@@ -91,9 +91,11 @@ namespace jam
 		int rings, slices;
 		int radSeg;
 		float size;
+		std::string filepath; //imported mesh from a model
 		ImageGenParam imageGenParameters;
 	};
-	
+	Mesh MeshGenParam_Generate(const MeshGenParam& generator);
+
 	struct Resource
 	{
 		ResourceID id = 0;

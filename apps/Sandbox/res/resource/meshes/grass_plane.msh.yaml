@@ -1,0 +1,11 @@
+header: [56B22F4613929010, "mesh", resource/meshes/grass_plane.msh.yaml]
+resource: 
+  id: 56B22F4613929010
+  type: texture
+  name: Grass Plane Mesh
+  mesh:
+    type: 1
+    width: 50
+    length: 50
+    resX: 10
+    resY: 10  

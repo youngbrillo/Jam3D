@@ -26,7 +26,7 @@ entities:
   - entity: 
       handle: ["ground", true, true]
       Transform3D: [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1]
-      MeshInstance3D: [0, D60AC072D6E692A3, 00ff00ff]
+      MeshInstance3D: [56B22F4613929010, 0, 00ff00ff]
   - entity: 
       handle: ["Intro Text", true, true]
       Transform2D: [0, 670, 1280, 50, 0, 0, 1.0, 0]

@@ -1,9 +1,9 @@
 resources:
 # models:
-  - res: [56B22F4613929010, "mesh", resource/mesh/grass_plane.msh.yaml]
-  - res: [268B3E1C1E2A4090, "mesh", resource/mesh/water_plane.msh.yaml]
-  - res: [44128DDF85CF18E4, "mesh", resource/mesh/cube.msh.yaml]
-  - res: [AC0FA6B842CD2964, "mesh", resource/mesh/sphere.msh.yaml]
+  - res: [56B22F4613929010, "mesh", resource/meshes/grass_plane.msh.yaml]
+  - res: [268B3E1C1E2A4090, "mesh", resource/meshes/water_plane.msh.yaml]
+  - res: [44128DDF85CF18E4, "mesh", resource/meshes/cube.msh.yaml]
+  - res: [AC0FA6B842CD2964, "mesh", resource/meshes/sphere.msh.yaml]
 # textures:
   - res: [D60AC072D6E692A3, "texture", resource/textures/checkered.txtr.yaml]
   - res: [4A343406A9B944C6, "texture", resource/textures/gradient.txtr.yaml]

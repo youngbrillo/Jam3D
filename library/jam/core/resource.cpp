@@ -155,6 +155,89 @@ namespace YAML
 	};
 
 
+	//MeshGenParam 'bindings'
+	template<>
+	struct convert<jam::MeshGenParam> {
+		static Node encode(const jam::MeshGenParam& v) {
+			Node node;
+			node.push_back(v.type);
+
+			if (v.type == jam::ImagePrimative_Import)
+			{
+				node.push_back(v.filepath);
+			}
+			else
+			{
+				node.push_back(v.height);
+				switch (v.type)
+				{
+					break;
+				case jam::MeshPrimative_Poly:
+					node.push_back(v.sides); node.push_back(v.radius);
+					break;
+				case jam::MeshPrimative_Plane:
+					node.push_back(v.width); node.push_back(v.length);
+					node.push_back(v.resX); node.push_back(v.resY);
+					break;
+				case jam::MeshPrimative_Cube:
+					node.push_back(v.width); node.push_back(v.height);  node.push_back(v.length);
+					break;
+				case jam::MeshPrimative_Sphere:
+				case jam::MeshPrimative_HemiSphere:
+					node.push_back(v.radius);
+					node.push_back(v.rings);
+					node.push_back(v.slices);
+					break;
+				case jam::MeshPrimative_Cylinder:
+				case jam::MeshPrimative_Cone:
+					node.push_back(v.radius);
+					node.push_back(v.height);
+					node.push_back(v.slices);
+					break;
+				case jam::MeshPrimative_Torus:
+				case jam::MeshPrimative_Knot:
+					node.push_back(v.radius);
+					node.push_back(v.size);
+					node.push_back(v.radSeg);
+					node.push_back(v.sides);
+					break;
+				case jam::MeshPrimative_Heightmap:
+				case jam::MeshPrimative_Cubicmap:
+					node.push_back(v.imageGenParameters);
+					break;
+				case jam::MeshPrimative_null:
+				case jam::MeshPrimative_Import:
+				default:
+					break;
+				}
+			}
+			return node;
+		}
+
+		static bool decode(const Node& node, jam::MeshGenParam& v) {
+			if (!node.IsMap())
+				return false;
+
+			jam::readValueEx(node["type"], &v.type);
+			jam::readValueEx(node["sides"], &v.sides);
+			jam::readValueEx(node["width"], &v.width);
+			jam::readValueEx(node["height"], &v.height);
+			jam::readValueEx(node["length"], &v.length);
+			jam::readValueEx(node["resX"], &v.resX);
+			jam::readValueEx(node["resY"], &v.resY);
+			jam::readValueEx(node["radius"], &v.radius);
+			jam::readValueEx(node["rings"], &v.rings);
+			jam::readValueEx(node["slices"], &v.slices);
+			jam::readValueEx(node["radSeg"], &v.radSeg);
+			jam::readValueEx(node["size"], &v.size);
+			jam::readValueEx(node["filepath"], &v.filepath);
+			jam::readValueEx(node["image"], &v.imageGenParameters);
+
+			return true;
+		}
+	};
+
+
 	YAML::Emitter& operator << (YAML::Emitter& out, const jam::Resource& v)
 	{
 		out << YAML::Flow << YAML::BeginSeq
@@ -355,4 +438,122 @@ Image jam::ImageGenParam_Generate(const ImageGenParam& res)
 		break;
 	}
 	return img;
+}
+
+bool jam::ModelResource::Load(std::string Filepath)
+{
+	Unload();
+	filepath = Filepath;
+	std::string ext = TextToLower(GetFileExtension(filepath.c_str()));
+	bool result = false;
+	if (ext == ".yml" || ext == ".yaml" || ext == ".txtr")
+	{
+		YAML::Node root = LoadYamlFile(filepath);
+
+		if (auto node = root["resource"])
+		{
+			readValueEx(node["id"], &id);
+			readValueEx(node["name"], &name);
+			readValueEx(node["mesh"], &parameters);
+		}
+
+		if (id == 0)
+			id = UUID();
+
+		if (type == MeshPrimative_Import)
+		{
+			res = LoadModel(parameters.filepath.c_str());
+			result = isValid();
+		}
+		else
+		{
+			Mesh mesh = MeshGenParam_Generate(this->parameters);
+			result = Load(mesh);
+		}
+	}
+	else
+	{
+		res = LoadModel(filepath.c_str());
+		result = isValid();
+	}
+	if (result) {
+		tag = ResourceTag_InMemory;
+	}
+	return result;
+}
+
+bool jam::ModelResource::Load(Mesh mesh)
+{
+	res = LoadModelFromMesh(mesh);
+	if (isValid())
+	{
+		return true;
+	}
+	return false;
+}
+
+bool jam::ModelResource::isValid() const
+{
+	return IsModelValid(res);
+}
+
+void jam::ModelResource::Unload()
+{
+	if (isValid())
+		UnloadModel(res);
+
+	tag = ResourceTag_Unloaded;
+}
+
+
+Mesh jam::MeshGenParam_Generate(const MeshGenParam& res)
+{
+	Mesh mesh = { 0 };
+	switch (res.type)
+	{
+	case jam::MeshPrimative_Poly:
+		mesh = GenMeshPoly(res.sides, res.radius);
+		break;
+	case jam::MeshPrimative_Plane:
+		mesh = GenMeshPlane(res.width, res.length, res.resX, res.resY);
+		break;
+	case jam::MeshPrimative_Cube:
+		mesh = GenMeshCube(res.width, res.height, res.length);
+		break;
+	case jam::MeshPrimative_Sphere:
+		mesh = GenMeshSphere(res.radius, res.rings, res.slices);
+		break;
+	case jam::MeshPrimative_HemiSphere:
+		mesh = GenMeshHemiSphere(res.radius, res.rings, res.slices);
+		break;
+	case jam::MeshPrimative_Cylinder:
+		mesh = GenMeshCylinder(res.radius, res.height, res.slices);
+		break;
+	case jam::MeshPrimative_Cone:
+		mesh = GenMeshCone(res.radius, res.height, res.slices);
+		break;
+	case jam::MeshPrimative_Torus:
+		mesh = GenMeshTorus(res.radius, res.size, res.radSeg, res.sides);
+		break;
+	case jam::MeshPrimative_Knot:
+		mesh = GenMeshKnot(res.radius, res.size, res.radSeg, res.sides);
+		break;
+	case jam::MeshPrimative_Heightmap: {
+		Image img = ImageGenParam_Generate(res.imageGenParameters);
+		mesh = GenMeshHeightmap(img, Vector3{ 1,1,1 });
+		UnloadImage(img);
+		}
+		break;
+	case jam::MeshPrimative_Cubicmap: {
+		Image img = ImageGenParam_Generate(res.imageGenParameters);
+		mesh = GenMeshCubicmap(img, Vector3{ 1,1,1 });
+		UnloadImage(img);
+		}
+		break;
+	case jam::MeshPrimative_Import:
+	default:
+		mesh = GenMeshCube(0.5f, 1, 0.5f);
+		break;
+	}
+	return mesh;
 }

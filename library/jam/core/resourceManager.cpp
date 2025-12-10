@@ -142,18 +142,56 @@ jam::TextureResource* jam::ResourceManager::Get_Or_LoadTexture(ResourceID existi
 
 jam::ResourceID jam::ResourceManager::Load_Mesh(std::string file)
 {
-    return ResourceID();
+    return _load_mesh(file, nullptr);
 }
 
 jam::ModelResource* jam::ResourceManager::Get_Mesh(ResourceID id)
 {
-    return nullptr;
+    ModelResource* res = nullptr;
+    try {
+        res = &meshes.at(id);
+    }
+    catch (const std::out_of_range& e) {
+        res = &meshes.at(_default_res_id);
+    }
+    return res;
 }
 
-jam::ModelResource* jam::ResourceManager::Get_Or_LoadMesh(ResourceID rid, std::string fileLocation)
+jam::ModelResource* jam::ResourceManager::Get_Or_LoadMesh(ResourceID existing_id, std::string fileLocation)
 {
-    return &meshes.at(_default_res_id);
-    return nullptr;
+
+    auto itTex = meshes.find(existing_id);
+    if (itTex == meshes.end())
+    {
+        if (fileLocation.empty())
+        {
+            //find it
+            auto repoRecord = resources.find(existing_id);
+            if (repoRecord != resources.end())
+            {
+                fileLocation = repoRecord->second.filepath;
+            }
+            else
+            {
+                TraceLog(LOG_ERROR, "[ResourceManager]\t Could not find a resource with ID: '%s' | %llu.", existing_id.toString(), existing_id.toUint64());
+                return &meshes.at(_default_res_id);
+                //return nullptr;
+            }
+        }
+
+        ResourceID tracked_id = this->_load_mesh(fileLocation, &existing_id);
+        if (existing_id != tracked_id) {
+            TraceLog(LOG_WARNING, "[ResourceManager]\t Mismatched Texture IDs found for '%s'.\n\tWanted '%s'\n\tFound: '%s'"
+                , fileLocation.c_str()
+                , existing_id.toString().c_str()
+                , tracked_id.toString().c_str()
+            );
+        }
+
+        return Get_Mesh(tracked_id);
+    }
+
+    return &itTex->second;
 }
 
 jam::ResourceManager::ResourceManager()
@@ -175,17 +213,11 @@ jam::ResourceManager::~ResourceManager()
 
 jam::ResourceID jam::ResourceManager::_load_resource(std::string file, ResourceID* tracked)
 {
-    return ResourceID();
-}
-
-jam::ResourceID jam::ResourceManager::_load_texture(std::string file, ResourceID* tracked)
-{
     ResourceID rid = FindResource(file);
     if (rid != _default_res_id) // the resource already exists, so return it
         return rid;
 
     fs::path target(file);
-    std::string extension = target.extension().string();
 
     if (!std::filesystem::exists(target)) //resource doesn't exist at all, quit
     {
@@ -197,6 +229,13 @@ jam::ResourceID jam::ResourceManager::_load_texture(std::string file, ResourceID
         rid = *tracked;
     else
         rid = ResourceID();
+
+    return rid;
+}
+
+jam::ResourceID jam::ResourceManager::_load_texture(std::string file, ResourceID* tracked)
+{
+    ResourceID rid = _load_resource(file, tracked);
 
     TextureResource resource;
 
@@ -216,5 +255,22 @@ jam::ResourceID jam::ResourceManager::_load_texture(std::string file, ResourceID
 
 jam::ResourceID jam::ResourceManager::_load_mesh(std::string file, ResourceID* tracked)
 {
-    return ResourceID();
+    ResourceID rid = _load_resource(file, tracked);
+
+    ModelResource resource;
+    bool success = resource.Load(file);
+
+    if (success)
+    {
+        meshes.emplace(rid, resource);
+        resourceLocations.emplace(file, rid);
+        TraceLog(LOG_INFO, "[ResourceManager]\t [%s] Model Loaded Successfully  '%s'", rid.toString().c_str(), file.c_str());
+    }
+    else
+    {
+        TraceLog(LOG_ERROR, "[ResourceManager]\t could not validate Model '%s'", file.c_str());
+    }
+
+
+    return rid;
 }
