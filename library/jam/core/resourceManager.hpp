@@ -26,10 +26,13 @@ namespace jam
 		TextureResource*		Get_Texture(ResourceID id);
 		TextureResource*		Get_Or_LoadTexture(ResourceID rid, std::string fileLocation = "");
 
-
 		ResourceID			Load_Mesh(std::string file);
 		ModelResource*		Get_Mesh(ResourceID id);
 		ModelResource*		Get_Or_LoadMesh(ResourceID rid, std::string fileLocation = "");
+
+		ResourceID			Load_Shader(std::string file);
+		ShaderResource*		Get_Shader(ResourceID id);
+		ShaderResource*		Get_Or_Shader(ResourceID rid, std::string fileLocation = "");
 	private:
 		ResourceManager();
 		~ResourceManager();
@@ -37,10 +40,13 @@ namespace jam
 		ResourceID _load_resource(std::string file, ResourceID* tracked);
 		ResourceID _load_texture(std::string file, ResourceID* tracked);
 		ResourceID _load_mesh(std::string file, ResourceID* tracked);
+		ResourceID _load_shader(std::string file, ResourceID* tracked);
 
 		static ResourceManager* _instance;
 		std::unordered_map<ResourceID, TextureResource> textures;
 		std::unordered_map<ResourceID, ModelResource> meshes;
+		std::unordered_map<ResourceID, ShaderResource> shaders;
+
 		std::unordered_map<ResourceID, Resource> resources;
 		std::unordered_map<std::string, ResourceID> resourceLocations;
 

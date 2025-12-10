@@ -8,6 +8,9 @@ resources:
   - res: [D60AC072D6E692A3, "texture", resource/textures/checkered.txtr.yaml]
   - res: [4A343406A9B944C6, "texture", resource/textures/gradient.txtr.yaml]
   - res: [59C08E27A30E3792, "texture", resource/textures/perlin-noise.txtr.yaml]
+  - res: [A0C7A5BA7CB6466D, "texture", resource/textures/skybox.txtr.yaml]
+  - res: [FDEE3289C3CF41D4, "texture", resource/textures/Daylight Box UV.png]
+  
 # shaders:
   - res: [B3F4D2E5C1A9F4D2, "shader", resource/shaders/bloom.shdr.yaml]
   - res: [FDFA47C4AA722214, "shader", resource/shaders/lighting.shdr.yaml]

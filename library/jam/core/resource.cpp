@@ -460,7 +460,7 @@ bool jam::ModelResource::Load(std::string Filepath)
 		if (id == 0)
 			id = UUID();
 
-		if (type == MeshPrimative_Import)
+		if (parameters.type == MeshPrimative_Import)
 		{
 			res = LoadModel(parameters.filepath.c_str());
 			result = isValid();
@@ -556,4 +556,77 @@ Mesh jam::MeshGenParam_Generate(const MeshGenParam& res)
 		break;
 	}
 	return mesh;
+}
+
+bool jam::ShaderResource::Load(std::string Filepath)
+{
+	filepath = Filepath;
+	std::string ext = TextToLower(GetFileExtension(filepath.c_str()));
+
+	YAML::Node root = LoadYamlFile(filepath);
+	if (auto node = root["resource"])
+	{
+		readValueEx(node["id"], &id);
+		readValueEx(node["name"], &name);
+
+		if (auto shdrNode = node["shader"])
+		{
+			readValueEx(shdrNode["vertex"], &vertex);
+			readValueEx(shdrNode["fragment"], &fragment);
+			readValueEx(shdrNode["inline"], &isInline);
+		}
+	}
+
+	if (id == 0)
+		id = UUID();
+
+	bool result = false;
+	result = Reload();
+
+	if (result) {
+		tag = ResourceTag_InMemory;
+	}
+	return result;
+}
+
+bool jam::ShaderResource::isValid() const
+{
+	return IsShaderValid(res);
+}
+
+void jam::ShaderResource::Unload()
+{
+	if (isValid())
+		UnloadShader(res);
+
+	res = { 0 };
+	tag = ResourceTag_Unloaded;
+}
+
+bool jam::ShaderResource::Reload()
+{
+	Unload();
+
+	if (isInline)
+	{
+		res = LoadShaderFromMemory(vertex.c_str(), fragment.c_str());
+	}
+	else
+	{
+		res = LoadShader( vertex.empty() ? nullptr : vertex.c_str(), fragment.c_str());
+	}
+
+	if(!isValid())
+	{
+		//invalid format
+		TraceLog(LOG_ERROR, "[ShaderResource]\t could not validate shader  %s : [%s | %s]", name.c_str(), vertex.c_str(), vertex.c_str());
+		return false;
+	}
+
+	//{
+	//	uniforms.time_loc = GetShaderLocation(shader, "TIME");
+	//	uniforms.view_loc = GetShaderLocation(shader, "VIEW");
+	//}
+
+	return true;
 }

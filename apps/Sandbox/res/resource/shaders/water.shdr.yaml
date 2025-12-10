@@ -1,0 +1,9 @@
+header: [90CDD149E186FFC3, "shader"]
+resource: 
+  id: 90CDD149E186FFC3
+  type: shader
+  name: Skybox 
+  shader:
+    vertex: shaders/water.vert.glsl
+    fragment: shaders/water.frag.glsl
+    

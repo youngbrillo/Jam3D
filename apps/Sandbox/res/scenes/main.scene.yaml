@@ -6,6 +6,31 @@ scene:
   scriptPath: scenes/main.scene.lua
   backgroundColor: 5E7D3EFF
   resolution: [1280, 720]
+viewport:
+    resolution: [1280, 720]
+    rendering: true
+    visible_on_screen: true
+    backgroundColor: 5E7D3EFF
+    default_camera:
+      position: [0, 5, 10]
+      target: [0, 0, 0]
+      type: 0
+      fov: 45
+environment:
+    skybox:
+        visible: false
+        texture: A0C7A5BA7CB6466D
+        shader: B212C50DD6ECFE01
+    lighting:
+        ambient: 5e5e5eFF
+        direction: [0.5, -1, -0.5]
+        lights:
+            - type: 0   # Directional Light
+              position: [10, 10, 10]
+              direction: [-1, -1, -1]
+              color: FFFFFFFF
+              intensity: 1.0
+              range: 50.0
 entities:
   - entity: 
       handle: ["mr. cube", true, true]
@@ -24,6 +49,10 @@ entities:
       Transform3D: [-3, 0.5, -2.5, 1, 1, 1, 0, 0, 0, 1, 1]
       MeshInstance3D: [0, D60AC072D6E692A3]
   - entity: 
+      handle: ["platform ALPHA", true, true]
+      Transform3D: [0, 3, -7, 7.5, 0.1, 7.5, 0.5, 0, 0, 0.8660254, 1]
+      MeshInstance3D: [0, 4A343406A9B944C6]
+  - entity: 
       handle: ["ground", true, true]
       Transform3D: [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1]
       MeshInstance3D: [56B22F4613929010, 59C08E27A30E3792]
@@ -31,4 +60,4 @@ entities:
       handle: ["Intro Text", true, true]
       Transform2D: [0, 670, 1280, 50, 0, 0, 1.0, 0]
       UIPanel: [0, [0, 0, 64, 64, 0,0,0,0,0], 7F, true]
-      UIText: [0, "Welcome to the Cube Sandbox!", [-10, -20], 20, 1.0, 0.0, FFFFFFFF, true]
+      UIText: [0, "Hello, Sandbox Scene", [-10, -20], 20, 1.0, 0.0, FFFFFFFF, true]

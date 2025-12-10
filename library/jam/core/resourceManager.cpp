@@ -194,6 +194,55 @@ jam::ModelResource* jam::ResourceManager::Get_Or_LoadMesh(ResourceID existing_id
     return &itTex->second;
 }
 
+jam::ResourceID jam::ResourceManager::Load_Shader(std::string file)
+{
+    return _load_shader(file, nullptr);
+}
+
+jam::ShaderResource* jam::ResourceManager::Get_Shader(ResourceID id)
+{
+    auto it = shaders.find(id);
+    if (it != shaders.end())
+        return &it->second;
+ 
+    return nullptr;
+}
+
+jam::ShaderResource* jam::ResourceManager::Get_Or_Shader(ResourceID existing_id, std::string fileLocation)
+{
+    auto iter = shaders.find(existing_id);
+    if (iter == shaders.end())
+    {
+        if (fileLocation.empty())
+        {
+            //find it
+            auto repoRecord = resources.find(existing_id);
+            if (repoRecord != resources.end())
+            {
+                fileLocation = repoRecord->second.filepath;
+            }
+            else
+            {
+                TraceLog(LOG_ERROR, "[ResourceManager]\t Could not find a resource with ID: '%s' | %llu.", existing_id.toString(), existing_id.toUint64());
+                return nullptr;
+            }
+        }
+
+        ResourceID tracked_id = this->_load_shader(fileLocation, &existing_id);
+        if (existing_id != tracked_id) {
+            TraceLog(LOG_WARNING, "[ResourceManager]\t Mismatched Shader IDs found for '%s'.\n\tWanted '%s'\n\tFound: '%s'"
+                , fileLocation.c_str()
+                , existing_id.toString().c_str()
+                , tracked_id.toString().c_str()
+            );
+        }
+
+        return Get_Shader(tracked_id);
+    }
+
+    return &iter->second;
+}
+
 jam::ResourceManager::ResourceManager()
 {
 }
@@ -269,6 +318,28 @@ jam::ResourceID jam::ResourceManager::_load_mesh(std::string file, ResourceID* t
     else
     {
         TraceLog(LOG_ERROR, "[ResourceManager]\t could not validate Model '%s'", file.c_str());
+    }
+
+
+    return rid;
+}
+
+jam::ResourceID jam::ResourceManager::_load_shader(std::string file, ResourceID* tracked)
+{
+    ResourceID rid = _load_resource(file, tracked);
+
+    ShaderResource resource;
+    bool success = resource.Load(file);
+
+    if (success)
+    {
+        shaders.emplace(rid, resource);
+        resourceLocations.emplace(file, rid);
+        TraceLog(LOG_INFO, "[ResourceManager]\t [%s] Shader Loaded Successfully  '%s'", rid.toString().c_str(), file.c_str());
+    }
+    else
+    {
+        TraceLog(LOG_ERROR, "[ResourceManager]\t could not validate Shader '%s'", file.c_str());
     }
 
 

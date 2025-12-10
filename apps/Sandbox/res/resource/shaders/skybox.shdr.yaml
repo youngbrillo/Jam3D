@@ -1,0 +1,9 @@
+header: [B212C50DD6ECFE01, "shader", resource/shaders/skybox.shdr.yaml]
+resource: 
+  id: B212C50DD6ECFE01
+  type: shader
+  name: Skybox 
+  shader:
+    vertex: shaders/skybox.vs
+    fragment: shaders/skybox.fs
+    

@@ -10,6 +10,6 @@ resource:
     checksX: 8
     checksY: 8  
     primary: FFFFFFFF
-    secondary: 000000FF
+    secondary: 5E5E5EFF
     filter: 0
     wrap: 0

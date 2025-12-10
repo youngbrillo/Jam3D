@@ -142,13 +142,12 @@ namespace jam
 	{
 		Shader res = { 0 };
 		std::string vertex, fragment;
-		bool is_external = true;
+		bool isInline = false;
 		operator const Shader& () const { return res; }
 
 		bool Load(std::string filepath);
-		bool Load(Mesh mesh);
 		bool isValid() const;
 		void Unload();
-		void Reload();
+		bool Reload();
 	};
 }
