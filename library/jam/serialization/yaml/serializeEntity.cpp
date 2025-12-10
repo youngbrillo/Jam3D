@@ -35,6 +35,7 @@ namespace YAML
             Node node;
             node.push_back(rhs.mesh_id);
             node.push_back(rhs.material_id);
+            node.push_back(rhs.material.maps[0].color);
             return node;
         }
         static bool decode(const Node& node, MeshInstance3D& rhs) {
@@ -42,6 +43,7 @@ namespace YAML
                 return false;
             rhs.mesh_id = node[0].as<jam::UUID>();
             rhs.material_id = node[1].as<jam::UUID>();
+            jam::readValueEx(node[2], &rhs.material.maps[0].color);
             return true;
         }
     };
@@ -61,6 +63,7 @@ namespace YAML
         out << YAML::Flow << YAML::BeginSeq
             << v.mesh_id
             << v.material_id
+            << v.material.maps[0].color
             << YAML::EndSeq;
         return out;
     }
