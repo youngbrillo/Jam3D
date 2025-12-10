@@ -42,6 +42,7 @@ namespace jam
 		std::unordered_map<ResourceID, TextureResource> textures;
 		std::unordered_map<ResourceID, ModelResource> meshes;
 		std::unordered_map<ResourceID, Resource> resources;
+		std::unordered_map<std::string, ResourceID> resourceLocations;
 
 		ResourceID _default_res_id = 0;
 		friend class Editor;

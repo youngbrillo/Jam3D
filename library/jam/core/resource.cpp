@@ -132,8 +132,8 @@ namespace YAML
 				return false;
 
 			jam::readValueEx(node["type"], &v.type);
-			jam::readValueEx(node["primary"], &v.width);
-			jam::readValueEx(node["primary"], &v.height);
+			jam::readValueEx(node["width"], &v.width);
+			jam::readValueEx(node["height"], &v.height);
 			jam::readValueEx(node["primary"], &v.primary);
 			jam::readValueEx(node["secondary"], &v.secondary);
 			jam::readValueEx(node["direction"], &v.direction);
