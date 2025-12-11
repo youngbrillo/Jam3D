@@ -18,6 +18,7 @@ jam::Scene::Scene(SceneConfig config_)
 
 jam::Scene::~Scene()
 {
+    worldEnv.skybox.Unload();
 }
 
 void jam::Scene::Begin()
@@ -91,6 +92,9 @@ void jam::Scene::RenderContent()
 
     Camera3D& cam = GetCamera();
     BeginMode3D(cam);
+
+    worldEnv.skybox.render();
+
     this->onRender3DStart(cam);
     auto mesh_view = world.view<Transform3D, MeshInstance3D>(entt::exclude<HiddenTag>);
 

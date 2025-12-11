@@ -1,0 +1,8 @@
+header: [A0C7A5BA7CB6466D, "texture", resource/textures/skybox.txtr.yaml]
+resource: 
+  id: A0C7A5BA7CB6466D
+  type: texture
+  name: "Skybox - Daytime"
+  texture:
+    type: 10
+    filepath: resource/textures/Daylight Box UV.png

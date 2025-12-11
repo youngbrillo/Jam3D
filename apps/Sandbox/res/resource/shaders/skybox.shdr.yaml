@@ -4,6 +4,6 @@ resource:
   type: shader
   name: Skybox 
   shader:
-    vertex: shaders/skybox.vs
-    fragment: shaders/skybox.fs
+    vertex: resource/shaders/skybox.vs
+    fragment: resource/shaders/skybox.fs
     

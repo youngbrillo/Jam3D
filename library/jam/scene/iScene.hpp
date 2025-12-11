@@ -2,6 +2,7 @@
 #include "Jam/core/entity.hpp"
 #include "Jam/core/system.hpp"
 #include "jam/core/clock.hpp"
+#include "Environment.hpp"
 #include <raylib.h>
 #include <functional>
 
@@ -52,6 +53,7 @@ namespace jam
         entt::registry world;
         entt::dispatcher eventDispatch;
         RenderTarget renderTarget;
+        Environment worldEnv;
     public:
         Scene(SceneConfig config);
         virtual ~Scene();

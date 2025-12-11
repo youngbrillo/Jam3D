@@ -17,10 +17,7 @@ viewport:
       type: 0
       fov: 45
 environment:
-    skybox:
-        visible: false
-        texture: A0C7A5BA7CB6466D
-        shader: B212C50DD6ECFE01
+    skybox: [true, B212C50DD6ECFE01, A0C7A5BA7CB6466D]
     lighting:
         ambient: 5e5e5eFF
         direction: [0.5, -1, -0.5]

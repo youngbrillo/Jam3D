@@ -59,6 +59,7 @@ namespace jam
 		ImagePrimative_Cellular = 7,
 		ImagePrimative_Text = 8,
 		ImagePrimative_Import = 9,
+		ImagePrimative_CubeMap = 10,
 	};
 
 
@@ -78,6 +79,7 @@ namespace jam
 		std::string filepath; //imported image
 		int filter = TEXTURE_FILTER_POINT;
 		int wrap = TEXTURE_WRAP_REPEAT;
+		int cubemap_layout = CUBEMAP_LAYOUT_AUTO_DETECT;
 	};
 
 	Image ImageGenParam_Generate(const ImageGenParam& generator);

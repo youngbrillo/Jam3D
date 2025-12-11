@@ -38,6 +38,7 @@ void jam::serialization::DeserializeScene(YAML::Node root, Scene* scene)
 		return;
 	}
 	DeserializeSceneConfig(root["scene"], scene->config);
+	scene->worldEnv.deserialize(root["environment"]);
 	DeserializeScene_Entities(root["entities"], scene);
 }
 

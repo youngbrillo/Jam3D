@@ -162,7 +162,7 @@ namespace YAML
 			Node node;
 			node.push_back(v.type);
 
-			if (v.type == jam::ImagePrimative_Import)
+			if (v.type == jam::MeshPrimative_Import)
 			{
 				node.push_back(v.filepath);
 			}
@@ -352,13 +352,21 @@ bool jam::TextureResource::Load(std::string Filepath)
 
 
 		Image img = ImageGenParam_Generate(this->parameters);
-		result = Load(img);
+		if (this->parameters.type == ImagePrimative_CubeMap)
+		{
+			res = LoadTextureCubemap(img, parameters.cubemap_layout);
+			result = isValid();
+		}
+		else
+		{
+			result = Load(img);
+		}
 		if (result)
 		{
-			UnloadImage(img);
 			SetTextureFilter(res, parameters.filter);
 			SetTextureWrap(res, parameters.wrap);
 		}
+		UnloadImage(img);
 	}
 	else
 	{
@@ -431,6 +439,7 @@ Image jam::ImageGenParam_Generate(const ImageGenParam& res)
 		img = GenImageText(res.width, res.height, res.text.c_str());
 		break;
 	case ImagePrimative_Import:
+	case ImagePrimative_CubeMap:
 		img = LoadImage(res.filepath.c_str());
 		break;
 	default:
