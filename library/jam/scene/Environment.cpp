@@ -35,6 +35,7 @@ inline YAML::Emitter& operator<<(YAML::Emitter& out, const jam::Skybox& v)
 }
 
 jam::Skybox::Skybox()
+    : model({0})
 {
 }
 
