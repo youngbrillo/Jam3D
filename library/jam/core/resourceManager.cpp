@@ -249,15 +249,25 @@ jam::ResourceManager::ResourceManager()
 
 jam::ResourceManager::~ResourceManager()
 {
-    for (auto&& [id, texture] : textures)
+    for (auto&& [id, res] : textures)
     {
-        texture.Unload();
+        res.Unload();
     }
 
-    for (auto&& [id, model] : meshes)
+    for (auto&& [id, res] : meshes)
     {
-        //model.Unload();
+        res.Unload();
     }
+
+    for (auto&& [id, res] : shaders)
+    {
+        res.Unload();
+    }
+
+    textures.clear();
+    meshes.clear();
+    shaders.clear();
+
 }
 
 jam::ResourceID jam::ResourceManager::_load_resource(std::string file, ResourceID* tracked)
