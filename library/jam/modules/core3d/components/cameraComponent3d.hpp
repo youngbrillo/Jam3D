@@ -5,7 +5,6 @@
 
 namespace jam::components
 {
-
 	struct SceneCamera3D
 	{
 		SceneCamera3D();
@@ -16,10 +15,15 @@ namespace jam::components
 
 	struct CameraEditorComponent
 	{
-		float speed = 3.0f;
-		float flyMultiplier = 1.5f;
+		bool enabled = true;
+		float move_speed = 5.5f;
+		float sprint_speed = 10.0f;
+		float look_speed = 30.0f;
+		float look_sensitivity = 0.01f;
+		float zoom_multiplier = 1.1f;
 		int mode = CameraMode::CAMERA_FREE;
 
+		Vector2 lmp;	//last mouse position
 		void Update(Transform3D& transform, Camera3D& camera, const Clock& clock);
 	};
 

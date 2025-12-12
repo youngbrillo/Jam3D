@@ -9,3 +9,4 @@ resource:
     length: 50
     resX: 10
     resY: 10  
+  uvScale: [1, 1]

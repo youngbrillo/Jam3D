@@ -5,4 +5,5 @@ resource:
   name: "Skybox - Daytime"
   texture:
     type: 10
-    filepath: resource/textures/Daylight Box UV.png
+    filepath: resource/textures/sky0.png
+    filter: 1
