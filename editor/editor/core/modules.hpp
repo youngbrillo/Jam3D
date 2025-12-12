@@ -4,4 +4,5 @@
 namespace jam::editor
 {
     bool renderToolBar(EditorLayer& editorLayer, EditorSettings& settings, Scene* scene);
+    bool renderResourceInspector(EditorLayer& editorLayer, EditorSettings& settings, Scene* scene);
 }

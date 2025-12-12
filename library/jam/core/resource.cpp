@@ -384,6 +384,8 @@ bool jam::TextureResource::Load(std::string Filepath)
 
 bool jam::TextureResource::Load(Image image)
 {
+	if (isValid())
+		Unload();
 	res = LoadTextureFromImage(image);
 	if (isValid())
 	{

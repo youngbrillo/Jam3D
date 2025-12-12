@@ -15,6 +15,8 @@ namespace jam::editor
 		bool entityInspectorVisible = true;
 		bool viewPortVisible = true;
 		bool consoleVisible = true;
+		bool resourceInspectorVisible = true;
+		bool assetWindowVisible = true;
 	};
 
 	class EditorLayer : public iApplicationLayer

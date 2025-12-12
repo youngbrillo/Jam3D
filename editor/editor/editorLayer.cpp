@@ -112,18 +112,14 @@ void jam::editor::EditorLayer::render()
 #ifdef IMGUI_HAS_DOCK
 	ImGui::DockSpaceOverViewport(0, NULL, ImGuiDockNodeFlags_PassthruCentralNode); // set ImGuiDockNodeFlags_PassthruCentralNode so that we can see the raylib contents behind the dockspace
 #endif
-	if (editor::renderToolBar(*this, settings, sceneRef))
-	{
+	if (editor::renderToolBar(*this, settings, sceneRef)){
 
 	}
-	//renderToolbar();
-	//renderAddNewFileDialog();
-	//renderExitToWindowsDialog();
-	//renderExternalFunction(&externals);
-	//renderSceneHierachy();
-	//editor::inspect_entity_properties(&_entityInspectorVisible, _selected_entity);
-	//editor::SceneConsole::Render(&_consoleVisible, sceneRef);
-	//renderViewport();
+
+	if (editor::renderResourceInspector(*this, settings, sceneRef)){
+
+	}
+
 
 	if (settings.demoVisible)
 		ImGui::ShowDemoWindow(&settings.demoVisible);
