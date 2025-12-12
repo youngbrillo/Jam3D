@@ -2,13 +2,13 @@ header: [4A343406A9B944C6, "texture", resource/textures/gradient.txtr.yaml]
 resource: 
   id: 4A343406A9B944C6
   type: texture
-  name: Gray/Green Gradient
+  name: Radial Gradient
   texture:
     type: 2
     width: 32
     height: 32
-    density: 0.75  
-    primary: 5e5e5eFF
-    secondary: 00FF00FF
+    density: 0.35  
+    primary: 5E5E5EFF
+    secondary: BAAFAFFF
     filter: 1
     wrap: 0
