@@ -87,4 +87,12 @@ namespace jam::components
         return Transform{ .translation = position, .rotation = orientation, .scale = size * scale };
     }
 
+    void Transform3D::LookAt(Vector3 target)
+    {
+        Matrix matLookAt = MatrixLookAt(position, target, Vector3{0,1,0});
+
+        Matrix mat = MatrixMultiply(matLookAt, toMatrix());
+        orientation = QuaternionNormalize(QuaternionFromMatrix(mat));
+    }
+
 }

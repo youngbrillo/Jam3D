@@ -25,5 +25,7 @@ namespace jam::components
 		Vector3 Up() const;
 
 		Transform toTransform() const;
+
+		void LookAt(Vector3 target);
 	};
 }
