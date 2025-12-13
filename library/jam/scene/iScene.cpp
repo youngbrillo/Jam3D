@@ -159,24 +159,28 @@ Entity jam::Scene::CreateEntity(std::string name, Vector3 position)
     return e;
 }
 
-Entity jam::Scene::CreateCube(std::string name, Vector3)
+Entity jam::Scene::CreateCube(std::string name, Vector3 p)
 {
-    return Entity();
+    Entity e = CreateEntity(name, p);
+    return e;
 }
 
-Entity jam::Scene::CreateSphere(std::string name, Vector3)
+Entity jam::Scene::CreateSphere(std::string name, Vector3 p)
 {
-    return Entity();
+    Entity e = CreateEntity(name, p);
+    return e;
 }
 
-Entity jam::Scene::CreatePlane(std::string name, Vector3)
+Entity jam::Scene::CreatePlane(std::string name, Vector3 p)
 {
-    return Entity();
+    Entity e = CreateEntity(name, p);
+    return e;
 }
 
-Entity jam::Scene::CreateDonut(std::string name, Vector3)
+Entity jam::Scene::CreateDonut(std::string name, Vector3 p )
 {
-    return Entity();
+    Entity e = CreateEntity(name, p);
+    return e;
 }
 
 
