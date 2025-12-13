@@ -43,16 +43,6 @@ namespace jam::editor
 		ExternalFunctionWrapper externals;
 		Entity _selected_entity;
 	private:
-		//void renderToolbar();
-		//void renderImguiDemo();
-		//void renderAddNewFileDialog();
-		//void renderExitToWindowsDialog();
-		//void renderSceneHierachy();
-
-		//void renderExternalFunction(ExternalFunctionWrapper* ef);
-
-		//void setViewport(bool isVisible);
-		//void renderViewport();
 		void on_entity_destroyed(entt::registry& registry, entt::entity handle);
 	};
 }

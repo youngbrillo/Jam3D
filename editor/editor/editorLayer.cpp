@@ -113,12 +113,15 @@ void jam::editor::EditorLayer::render()
 	ImGui::DockSpaceOverViewport(0, NULL, ImGuiDockNodeFlags_PassthruCentralNode); // set ImGuiDockNodeFlags_PassthruCentralNode so that we can see the raylib contents behind the dockspace
 #endif
 	if (editor::renderToolBar(*this, settings, sceneRef)){
+	}
+
+	if (editor::renderSceneHierarchy(&settings.sceneHeirarchyVisible, sceneRef, _selected_entity)) {
 
 	}
 
 	if (editor::renderResourceInspector(*this, settings, sceneRef)){
-
 	}
+
 
 
 	if (settings.demoVisible)
@@ -139,6 +142,8 @@ void jam::editor::EditorLayer::serialize(std::string configFilepath)
 		<< YAML::Key << "entityInspectorVisible" << YAML::Value << this->settings.entityInspectorVisible
 		<< YAML::Key << "viewPortVisible" << YAML::Value << this->settings.viewPortVisible
 		<< YAML::Key << "consoleVisible" << YAML::Value << this->settings.consoleVisible
+		<< YAML::Key << "resourceInspectorVisible" << YAML::Value << this->settings.resourceInspectorVisible
+		<< YAML::Key << "assetWindowVisible" << YAML::Value << this->settings.assetWindowVisible
 		<< YAML::EndMap;
 	SaveYamlFile(configFilepath, out);
 }
@@ -155,6 +160,8 @@ void jam::editor::EditorLayer::deserialize(std::string configFilepath)
 		readValueEx(root["entityInspectorVisible"], &settings.entityInspectorVisible);
 		readValueEx(root["viewPortVisible"], &settings.viewPortVisible);
 		readValueEx(root["consoleVisible"], &settings.consoleVisible);
+		readValueEx(root["resourceInspectorVisible"], &settings.resourceInspectorVisible);
+		readValueEx(root["assetWindowVisible"], &settings.assetWindowVisible);
 	}
 }
 
