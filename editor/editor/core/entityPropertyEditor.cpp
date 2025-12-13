@@ -1,6 +1,7 @@
 #include "entityPropertyEditor.hpp"
 #include "jam/modules/core3d/core3d.hpp"
-//#include "Jam/modules/physics/physModule.hpp"
+#include "jam/modules/ui/ui.hpp"
+
 
 #include "editor/editor.hpp"
 #include "resource_inspector.hpp"
@@ -76,7 +77,7 @@ namespace jam::editor {
 		ImGui::Text("Material id : %s", component.material_id.toString().c_str());
 
 		// texture drag n drop
-		ImGui::Text("Shader id : %s", component.material_id.toString().c_str());
+		ImGui::Text("Shader id : %s", component.shader_id.toString().c_str());
 
 		InspectMaterial(&component.material);
 		return true;
@@ -99,66 +100,50 @@ namespace jam::editor {
 
 		return false;
 	}
-	/*
-	static void InspectCameraShakePresets(Entity& entity, jam::core::CameraShakeSettings& preset)
+
+	static bool InspectTransform2D(Entity& entity, jam::components::Transform2D& component)
 	{
-		ImGui::Checkbox("additive Trauma", &preset.additiveTrauma);
-		ImGui::DragFloat("trauma", &preset.trauma, 0.01f);
-		ImGui::DragFloat("trauma Multiplyer", &preset.traumaMultiplyer, 0.01f);
-		ImGui::DragFloat("frequency", &preset.frequency, 0.01f);
-		ImGui::DragFloat("shake Magnitude", &preset.shakeMagnitude, 0.01f);
-		ImGui::DragFloat("rotation Magnitude", &preset.rotationMagnitude, 0.01f);
-		ImGui::DragFloat("duration", &preset.duration, 0.01f);
+		bool moved = ImGui::DragFloat2("position", &component.position.x, 0.1f);
+		ImGui::DragFloat2("size", &component.size.x, 0.1f);
+		ImGui::DragFloat2("origin", &component.origin.x, 0.1f);
+		ImGui::DragFloat("scale", &component.scale, 0.1f);
+		ImGui::SliderFloat("angle", &component.angle, -360, 360.0f);
 
-
-		if (entity.has<jam::core::CameraShake>()) {
-			if (ImGui::Button("Shake"))
-			{
-				entity.get<jam::core::CameraShake>().begin(preset);
-			}
-		}
+		return moved;
 	}
-	*/
-	/*
-		static void InspectCameraShake(Entity& entity, jam::core::CameraShake& shake)
+	static void InspectUIText(Entity& entity, jam::components::UIText& component)
+	{
+		ImGui::Text("Font id : %s", component.id.toString().c_str());
+		ImGui::Checkbox("visible", &component.visible);
+		ImGui::InputTextMultiline("text", &component.text);
+		ImGui::DragFloat2("origin", &component.origin.x, 1.0f);
+		ImGui::DragFloat("font size", &component.fontSize, 0.5f);
+		ImGui::DragFloat("font spacing", &component.spacing, 0.5f);
+		ImGui::SliderFloat("rotation", &component.rotation, -360.0f, 360.0f);
+		editor::EditColor("tint", &component.tint);
+	}
+	
+	static const char* npatch_layout_strings[] = { "9 patch", "3 patch vertical", "3 patch horizontal" };
+
+	static void InspectUIPanel(Entity& entity, jam::components::UIPanel& component)
+	{
+		ImGui::Checkbox("visible", &component.visible);
+		ImGui::Text("Texture id : %s", component.id.toString().c_str());
+		
+		if (ImGui::TreeNodeEx("Npatch", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::DragFloat("trauma", &shake.trauma, 0.01f);
-			ImGui::DragFloat("trauma Multiplyer", &shake.traumaMultiplyer, 0.01f);
-			ImGui::DragFloat("frequency", &shake.frequency, 0.01f);
-			ImGui::DragFloat("shake Magnitude", &shake.shakeMagnitude, 0.01f);
-			ImGui::DragFloat("rotation Magnitude", &shake.rotationMagnitude, 0.01f);
-			ImGui::DragFloat("_time", &shake.time, 0.01f);
-			ImGui::DragFloat("_shakeDuration", &shake.shakeDuration, 0.01f);
-			ImGui::DragInt("_seed", &shake.seed);
+			ImGui::DragFloat4("source", &component.npatch.source.x);
+			ImGui::DragInt("left", &component.npatch.left);
+			ImGui::DragInt("top", &component.npatch.top);
+			ImGui::DragInt("right", &component.npatch.right);
+			ImGui::DragInt("bottom", &component.npatch.bottom);
+			ImGui::SliderInt("layout", &component.npatch.layout, 0, NPATCH_THREE_PATCH_HORIZONTAL, npatch_layout_strings[component.npatch.layout]);
 
-			ImGui::Checkbox("is shaking", &shake.isShaking);
-			ImGui::DragFloat2("_preShakeOffset", &shake.preShakeOffset.x);
-			ImGui::DragFloat("_preShakeRotation", &shake.preShakeRotation);
-			ImGui::DragFloat("_initialTrauma", &shake.initialTrauma);
-			ImGui::DragFloat("_initialDuration", &shake.initialDuration);
-
+			ImGui::TreePop();
 		}
 
-		static void InspectSprite(Entity& entity, jam::core::Sprite& c) {
-
-			//editor::RecieveTexturePayload(&c.texture, &sprite.id);
-			ImGui::DragFloat4("source", &c.source.x);
-			ImGui::DragFloat2("scale", &c.scale.x, 0.01f, 100.0f);
-			ImGui::DragFloat2("offset", &c.offset.x, 0.01f, 100.0f);
-			ImGui::SliderInt("flipX", &c.flipX, -1, 1);
-			ImGui::SliderInt("flipY", &c.flipY, -1, 1);
-			jam::editor::EditColor("tint", &c.tint);
-		}
-
-		static void InspectSpriteAnimation(Entity& e, jam::core::SpriteAnimation& c) {
-
-			ImGui::Checkbox("loop", &c.loop);
-			ImGui::SliderFloat("timer", &c.timer.progress, 0, c.timer.duration);
-			ImGui::DragFloat("animation speed", &c.timer.duration, 0.01f);
-			ImGui::SliderInt("frame", &c.frame, 0, c.frames.size() - 1);
-
-		}
-	*/
+		editor::EditColor("tint", &component.tint);
+	}
 }
 
 void jam::editor::inspect_entity_properties(bool* visible, Entity& e)
@@ -205,18 +190,14 @@ void jam::editor::inspect_entity_properties(bool* visible, Entity& e)
 			ImGui::EndMenu();
 		}
 
-		//if (ImGui::BeginMenu("Physics"))
-		//{
-		//	AddComponentPopup<physics::RigidBody>(e, "RigidBody");
-		//	AddComponentPopup<physics::BoxCollider>(e, "Box Collider");
-		//	AddComponentPopup<physics::BoxArea>(e, "Box Area");
-		//	AddComponentPopup<physics::CircleCollider>(e, "Circle Collider");
-		//	AddComponentPopup<physics::CircleArea>(e, "Circle Area");
-		//	AddComponentPopup<physics::EdgeCollider>(e, "Edge Collider");
-		//	AddComponentPopup<physics::ColliderList>(e, "Collider List");
+		if (ImGui::BeginMenu("UI"))
+		{
+			AddComponentPopup<Transform2D>(e, "Transform 2D");
+			AddComponentPopup<UIPanel>(e, "Panel");
+			AddComponentPopup<UIText>(e, "Text");
+			ImGui::EndMenu();
+		}
 
-		//	ImGui::EndMenu();
-		//}
 		//external popups
 		for (auto&& [id, func] : ECPFRManager::Get().pop_up_functions) {
 			func(e);
@@ -248,6 +229,9 @@ void jam::editor::inspect_entity_properties(bool* visible, Entity& e)
 	RenderEComponentEditWidget<SceneCamera3D>("Scene Camera 3D", e, InspectSceneCameraComponent);
 	RenderEComponentEditWidget<CameraEditorComponent>("Camera Editor", e, InspectCameraEditorComponent);
 	RenderEComponentEditWidget<MeshInstance3D>("Mesh Instance 3D", e, InspectMeshInstance3D);
+	RenderEComponentEditWidget<Transform2D>("Transform 2D", e, InspectTransform2D);
+	RenderEComponentEditWidget<UIPanel>("UI Panel", e, InspectUIPanel);
+	RenderEComponentEditWidget<UIText>("UI Text", e, InspectUIText);
 	//external widgets
 	for (auto&& [id, func] : ECPFRManager::Get().widget_functions) {
 		func(e);

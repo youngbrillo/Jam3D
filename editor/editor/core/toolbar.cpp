@@ -124,10 +124,11 @@ bool jam::editor::renderToolBar(jam::editor::EditorLayer& layer, jam::editor::Ed
 		{
 			if (ImGui::BeginMenu("Editor"))
 			{
-				NAV_TOGGLE_OPTION_FUNCTION("toolbar", s.visible)
+				NAV_TOGGLE_OPTION_FUNCTION("visible", s.visible)
 				NAV_TOGGLE_OPTION_FUNCTION("toolbar", s.toolbarVisible)
 				NAV_TOGGLE_OPTION_FUNCTION("Demo", s.demoVisible)
-				NAV_TOGGLE_OPTION_FUNCTION("Scene", s.sceneHeirarchyVisible)
+				NAV_TOGGLE_OPTION_FUNCTION("Scene Heirarchy", s.sceneHeirarchyVisible)
+				NAV_TOGGLE_OPTION_FUNCTION("Viewport", s.viewPortVisible)
 				NAV_TOGGLE_OPTION_FUNCTION("Entity Properties", s.entityInspectorVisible)
 				NAV_TOGGLE_OPTION_FUNCTION("Console", s.consoleVisible)
 				ImGui::EndMenu();

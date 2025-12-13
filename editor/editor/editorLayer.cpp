@@ -115,12 +115,16 @@ void jam::editor::EditorLayer::render()
 #endif
 	editor::renderToolBar(*this, settings, sceneRef);
 
+	if (editor::renderResourceInspector(*this, settings, sceneRef)) {
+	}
+
 	editor::renderSceneHierarchy(&settings.sceneHeirarchyVisible, sceneRef, _selected_entity);
 
 	editor::inspect_entity_properties(&settings.entityInspectorVisible, _selected_entity);
 
-
-	if (editor::renderResourceInspector(*this, settings, sceneRef)){
+	if (editor::renderViewport(&settings.viewPortVisible, sceneRef))
+	{
+		sceneRef->renderTarget.enabled = false;
 	}
 
 

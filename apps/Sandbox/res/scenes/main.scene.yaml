@@ -9,7 +9,7 @@ scene:
 viewport:
     resolution: [1280, 720]
     rendering: true
-    visible_on_screen: true
+    visible_on_screen: false
     backgroundColor: 5E7D3EFF
     default_camera:
       position: [0, 5, 10]

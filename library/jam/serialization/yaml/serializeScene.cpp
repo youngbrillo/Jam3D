@@ -6,6 +6,8 @@ void jam::serialization::SerializeScene(YAML::Emitter& out, Scene* scene)
 {
 	out << yml::BeginMap;
 		SerializeSceneConfig(out, scene->config);
+		SerializeRenderTarget(out, scene->renderTarget);
+		scene->worldEnv.serialize(out);
 		SerializeScene_Entities(out, scene);
 	out << yml::EndMap;
 }
@@ -26,6 +28,15 @@ void jam::serialization::SerializeSceneConfig(YAML::Emitter& out, SceneConfig& d
 	out << yml::EndMap;
 }
 
+void jam::serialization::SerializeRenderTarget(YAML::Emitter& out, RenderTarget& rt)
+{
+	out << yml::Key << "viewport" << yml::BeginMap
+		<< yml::Key << "resoulution" << rt.resolution
+		<< yml::Key << "rendering" << rt.enabled
+		<< yml::Key << "visible_on_screen" << rt.visible
+	<< yml::EndMap;
+}
+
 void jam::serialization::SerializeScene_Entities(YAML::Emitter& out, Scene* scene)
 {
 }
@@ -38,6 +49,7 @@ void jam::serialization::DeserializeScene(YAML::Node root, Scene* scene)
 		return;
 	}
 	DeserializeSceneConfig(root["scene"], scene->config);
+	DeserializeRenderTarget(root["viewport"], scene->renderTarget);
 	scene->worldEnv.deserialize(root["environment"]);
 	DeserializeScene_Entities(root["entities"], scene);
 }
@@ -53,6 +65,16 @@ void jam::serialization::DeserializeSceneConfig(YAML::Node in, SceneConfig& conf
 	readValueEx(in["scriptPath"], &config.scriptPath);
 	readValueEx(in["backgroundColor"], &config.backgroundColor);
 	readValueEx(in["resolution"], &config.resolution);
+}
+
+void jam::serialization::DeserializeRenderTarget(YAML::Node in, RenderTarget& rt)
+{
+	if (!in)
+		return;
+	readValueEx(in["resolution"], &rt.resolution);
+	readValueEx(in["rendering"], &rt.enabled);
+	readValueEx(in["visible_on_screen"], &rt.visible);
+
 }
 
 

@@ -10,6 +10,7 @@ namespace jam::components
 		Texture2D texture = { 1,1,1 };
 
 		NPatchInfo npatch = NPatchInfo{
+			.source = {0, 0, 32, 32},
 			.left = 0,
 			.top = 0,
 			.right = 0,
