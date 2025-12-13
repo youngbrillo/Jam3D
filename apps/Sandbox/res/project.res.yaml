@@ -2,12 +2,12 @@ name: Shader Sandbox
 resourceDirectory: apps/sandbox/res
 iconPathLocation: logo.png
 version_major: 0
-version_minor: 20
+version_minor: 30
 version_patch: 0
 scene.overridePause: false
 window:
-  width: 1280
-  height: 720
+  width: 1702
+  height: 915
   monitor: 1
   configFlags: 36
   lockFPS: false

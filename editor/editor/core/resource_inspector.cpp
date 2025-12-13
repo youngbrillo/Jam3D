@@ -1,10 +1,11 @@
+#include "resource_inspector.hpp"
 #include "modules.hpp"
 #include "jam/core/resourceManager.hpp"
 #include "modules.hpp"
 #include "editor/rlImgui/rlImGui.h"
 #include "editor/editor.hpp"
 
-inline void ShowSetTextureFilter(const Texture& texture)
+void jam::editor::ShowSetTextureFilter(const Texture& texture)
 {
 	if (ImGui::Button("Point"))
 		SetTextureFilter(texture, TEXTURE_FILTER_POINT);
@@ -34,7 +35,7 @@ inline void ShowSetTextureFilter(const Texture& texture)
 		GenTextureMipmaps((Texture*)&texture);
 
 }
-static void InspectTexture(const Texture& texture, float width = 0)
+void jam::editor::InspectTexture(const Texture& texture, float width)
 {
 	if (width <= 0)
 		width = ImGui::GetContentRegionAvail().x;
@@ -116,7 +117,49 @@ static bool InspectImageGenParam(jam::ImageGenParam& p)
 	return ImGui::Button("Regenerate");
 }
 
-static void InspectTextureResource(jam::TextureResource& resource)
+void jam::editor::InspectMesh(Mesh* mesh)
+{
+	ImGui::Text("Verts: %d Tris:%d", mesh->vertexCount, mesh->triangleCount);
+}
+
+static bool s_show_empty_maps = true;
+void jam::editor::InspectMaterial(Material* mat)
+{
+	ImGui::Checkbox("show empty maps", &s_show_empty_maps);
+	if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		InspectMaterialMap("Albedo", mat->maps[MATERIAL_MAP_ALBEDO]);
+		InspectMaterialMap("Metalness", mat->maps[MATERIAL_MAP_METALNESS]);
+		InspectMaterialMap("Normal", mat->maps[MATERIAL_MAP_NORMAL]);
+		InspectMaterialMap("rougness", mat->maps[MATERIAL_MAP_ROUGHNESS]);
+		InspectMaterialMap("occlusion", mat->maps[MATERIAL_MAP_OCCLUSION]);
+		InspectMaterialMap("emission", mat->maps[MATERIAL_MAP_EMISSION]);
+		InspectMaterialMap("Height map", mat->maps[MATERIAL_MAP_HEIGHT]);
+		InspectMaterialMap("cubemap", mat->maps[MATERIAL_MAP_CUBEMAP]);
+		InspectMaterialMap("Irradiance", mat->maps[MATERIAL_MAP_IRRADIANCE]);
+		InspectMaterialMap("Prefilter", mat->maps[MATERIAL_MAP_PREFILTER]);
+		InspectMaterialMap("BRDF", mat->maps[MATERIAL_MAP_BRDF]);
+
+		ImGui::TreePop();
+	}
+}
+
+void jam::editor::InspectMaterialMap(const char* label, MaterialMap& item)
+{
+	if (item.texture.id == 0 && !s_show_empty_maps) 
+	{
+		return;
+	}
+	if (ImGui::TreeNode(label))
+	{
+		ImColor color = editor::EditColor("color", &item.color);
+		ImGui::DragFloat("Value", &item.value, 0.001f, 0, 1.0f);
+		ImGui::TreePop();
+	}
+}
+
+
+void jam::editor::InspectTextureResource(jam::TextureResource& resource)
 {
 	if (InspectImageGenParam(resource.parameters))
 	{
@@ -129,6 +172,7 @@ static void InspectTextureResource(jam::TextureResource& resource)
 	ImGui::Separator();
 	InspectTexture(resource.res, 150);
 }
+
 const static jam::UUID c_null_resource_id= 99;
 
 static jam::UUID s_selected_resource_id = c_null_resource_id;
@@ -156,7 +200,7 @@ namespace jam
 			{
 				auto& res = rm.textures[s_selected_resource_id];
 
-				InspectTextureResource(res);
+				editor::InspectTextureResource(res);
 			}
 
 		}

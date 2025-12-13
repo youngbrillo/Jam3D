@@ -8,7 +8,7 @@ namespace jam::components
 	{
 		UUID mesh_id = 0;
 		UUID material_id = 0;
-
+		UUID shader_id = 0;
 		Mesh* mesh = nullptr;
 		Material material = LoadMaterialDefault();
 

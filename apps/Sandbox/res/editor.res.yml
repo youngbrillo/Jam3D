@@ -5,3 +5,5 @@ sceneHeirarchyVisible: true
 entityInspectorVisible: true
 viewPortVisible: true
 consoleVisible: true
+resourceInspectorVisible: true
+assetWindowVisible: true

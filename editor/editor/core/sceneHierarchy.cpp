@@ -6,6 +6,7 @@
 namespace jam::editor {
 	static void Inspect_SceneConfig(SceneConfig* config);
 	static void Inspect_Environment(Environment* env);
+	static void Inspect_RenderTarget(RenderTarget* renderTarget);
 
 	static bool Inspect_EntityOnTree(Entity e, Entity& ref, Scene* scene);
 	static bool Scene_create_entity_type_menu(Scene* scene, Entity& ref);
@@ -23,7 +24,7 @@ bool jam::editor::renderSceneHierarchy(bool* isVisible, Scene* scene, Entity& se
 		Inspect_SceneConfig(&scene->config);
 		//ImGui::TreePop();}
 	ImGui::SeparatorText("viewport");
-
+		Inspect_RenderTarget(&scene->renderTarget);
 	ImGui::SeparatorText("environment");
 		Inspect_Environment(&scene->worldEnv);
 
@@ -94,10 +95,24 @@ namespace jam::editor {
 		{
 			static Color ambient = WHITE;
 			static Vector3 direction = { 1,1,1 };
-			editor::EditColor("ambient", &ambient);
-			ImGui::DragFloat3("direction", &direction.x, 0.01f);
+			editor::EditColor("label##ambient", &ambient);
+			ImGui::DragFloat3("label##direction", &direction.x, 0.01f);
 			ImGui::TreePop();
 		}
+	}
+
+	void Inspect_RenderTarget(RenderTarget* t)
+	{
+		ImGui::Checkbox("enabled", &t->enabled);
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("check if the scene should render to the render texture");
+		ImGui::Checkbox("visible", &t->visible);
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("check if the render texture should render to the screen");
+
+		if (ImGui::DragFloat2("resolution", &t->resolution.x, 1.0f))
+			t->Resize(t->resolution);
+
 	}
 
 

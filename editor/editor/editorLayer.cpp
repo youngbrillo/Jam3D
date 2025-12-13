@@ -2,8 +2,9 @@
 #include <jam/app/application.hpp>
 #include "rlImgui/rlImGui.h"
 #include "core/modules.hpp"
-#include "jam/serialization/yaml/serializeYAML.hpp"
+#include "core/entityPropertyEditor.hpp"
 
+#include "jam/serialization/yaml/serializeYAML.hpp"
 using namespace jam::editor;
 
 jam::editor::EditorLayer* s_instance = nullptr;
@@ -112,12 +113,12 @@ void jam::editor::EditorLayer::render()
 #ifdef IMGUI_HAS_DOCK
 	ImGui::DockSpaceOverViewport(0, NULL, ImGuiDockNodeFlags_PassthruCentralNode); // set ImGuiDockNodeFlags_PassthruCentralNode so that we can see the raylib contents behind the dockspace
 #endif
-	if (editor::renderToolBar(*this, settings, sceneRef)){
-	}
+	editor::renderToolBar(*this, settings, sceneRef);
 
-	if (editor::renderSceneHierarchy(&settings.sceneHeirarchyVisible, sceneRef, _selected_entity)) {
+	editor::renderSceneHierarchy(&settings.sceneHeirarchyVisible, sceneRef, _selected_entity);
 
-	}
+	editor::inspect_entity_properties(&settings.entityInspectorVisible, _selected_entity);
+
 
 	if (editor::renderResourceInspector(*this, settings, sceneRef)){
 	}

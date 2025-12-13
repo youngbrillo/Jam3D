@@ -3,8 +3,7 @@
 #include <Jam/core/entity.hpp>
 #include <functional>
 typedef std::function<void(jam::Entity& e)>   EntityInspectionFunction;
-
-namespace jam::strawberry::editor
+namespace jam::editor
 {
 	namespace functions {
 		template<typename T>
