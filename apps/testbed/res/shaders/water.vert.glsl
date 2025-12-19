@@ -1,0 +1,46 @@
+#version 330
+// Input vertex attributes
+in vec3 vertexPosition;
+in vec2 vertexTexCoord;
+in vec3 vertexNormal;
+in vec4 vertexColor;
+// Output vertex attributes (to fragment shader)
+out vec3 fragPosition;
+out vec2 fragTexCoord;
+out vec4 fragColor;
+out vec3 fragNormal;
+
+// Input uniform values
+uniform mat4 mvp;             // VS: ModelViewProjection matrix
+uniform mat4 matView;         // VS: View matrix
+uniform mat4 matProjection;   // VS: Projection matrix
+uniform mat4 matModel;        // VS: Model matrix
+uniform mat4 matNormal;       // VS: Normal matrix
+uniform sampler2D texture1;   // FS: GL_TEXTURE1
+
+varying float height;
+varying vec3 worldPosition;
+
+uniform float time;
+uniform float noiseScale = 10.0f;
+uniform float heightScale = 0.15f;
+uniform float timeScale = 0.025f;
+
+void main()
+{
+    vec3 VERTEX = vertexPosition;
+
+    worldPosition = vec3(matModel * vec4(VERTEX, 1.0));
+    height = texture(texture1, worldPosition.xz / noiseScale + time * timeScale).r;
+    VERTEX.y += (height * heightScale);
+
+
+    // Send vertex attributes to fragment shader
+    fragPosition = vec3(matModel*vec4(VERTEX, 1.0));
+    fragTexCoord = vertexTexCoord;
+    fragColor = vertexColor;
+    fragNormal = normalize(vec3(matNormal*vec4(vertexNormal, 1.0)));
+
+    // Calculate final vertex position
+    gl_Position = mvp*vec4(VERTEX, 1.0);
+}                                  
