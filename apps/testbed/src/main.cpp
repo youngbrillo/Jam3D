@@ -3,5 +3,5 @@
 
 int main(int argc, const char** argv)
 {
-	water2Main(argc, argv);
+	water3Main(argc, argv);
 }

@@ -6,3 +6,4 @@
 
 void water1Main(int argc, const char** argv);
 void water2Main(int argc, const char** argv);
+void water3Main(int argc, const char** argv);
