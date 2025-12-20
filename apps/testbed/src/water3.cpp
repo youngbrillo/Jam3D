@@ -1,5 +1,19 @@
 #include "waters.hpp"
+#include <jam/modules/core3d/components/transform3d.hpp>
 #include <vector>
+
+struct Node3D
+{
+    jam::components::Transform3D transform;
+    Mesh* meshInstance = nullptr;
+    Material material = LoadMaterialDefault();
+
+    void Render() const
+    {
+        DrawMesh(*meshInstance, material, transform.toMatrix());
+    }
+};
+
 
 void water3Main(int argc, const char** argv)
 {
@@ -18,6 +32,15 @@ void water3Main(int argc, const char** argv)
 
     const char* currentDirectory = GetWorkingDirectory();
     ChangeDirectory(TextFormat("%s/%s", currentDirectory, "apps\\testbed\\res"));
+
+    // Load Resources
+    //--------------------------------------------------------------------------------------
+    Image heightmap = LoadImage("heightmap.png");
+    Mesh meshTerrain = GenMeshHeightmap(heightmap, Vector3{ 1, 1,1 });
+    Texture2D textureTerrain = LoadTextureFromImage(heightmap);
+    UnloadImage(heightmap);
+
+
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
@@ -38,6 +61,17 @@ void water3Main(int argc, const char** argv)
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
+    std::vector<Node3D> nodes;
+
+    //add terrain node
+    {
+        Node3D& node = nodes.emplace_back();
+        node.transform.scale = 55.0f;
+        node.transform.position = { -node.transform.scale/2 , -3.75f, -node.transform.scale/2};
+        node.transform.size.y = 0.5f;
+        node.meshInstance = &meshTerrain;
+        node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureTerrain;
+    }
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -47,7 +81,6 @@ void water3Main(int argc, const char** argv)
         //----------------------------------------------------------------------------------
 
         isShowControls = IsKeyDown(KEY_LEFT_CONTROL);
-
 
         if (isShowControls && IsKeyPressed(KEY_R))
         {
@@ -64,9 +97,10 @@ void water3Main(int argc, const char** argv)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        ClearBackground(BLACK);
+        ClearBackground(DARKBLUE);
         BeginMode3D(camera);
-        DrawGrid(50, 1.0f);
+            DrawGrid(50, 1.0f);
+            for (auto& node : nodes) node.Render();
         EndMode3D();
 
         if (isPaused)
@@ -84,5 +118,9 @@ void water3Main(int argc, const char** argv)
         }
         EndDrawing();
     }
+
+    UnloadTexture(textureTerrain);
+    UnloadMesh(meshTerrain);
+
     CloseWindow();        // Close window and OpenGL context
 }
