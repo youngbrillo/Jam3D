@@ -103,7 +103,7 @@ void main()
     ALBEDO = surfaceColor;
 
     vec4 tint = vec4(ALBEDO, 1.0);
-    finalColor = (tint + vec4(specular, 1.0f)) * vec4(lightDot, 1.0);
+    finalColor = tint + (vec4(specular, 1.0f)) * vec4(lightDot, 1.0);
     finalColor += (ambient/10.0f) * tint;
     // finalColor = vec4(albedo, 1.0);
     // finalColor = normalColor;
