@@ -164,7 +164,8 @@ void water3Main(int argc, const char** argv)
     Mesh meshWaterSurface = GenMeshPlane(100, 100, 100, 100);
 
     //shaders
-    Shader waterShader = LoadShader("shaders/waterTile.vert.glsl", "shaders/waterTile.frag.glsl");
+    Shader shaderBase   = LoadShader("shaders3/base.vert.glsl", "shaders3/base.frag.glsl");
+    Shader shaderWater  = LoadShader("shaders3/water.vert.glsl", "shaders3/water.frag.glsl");
 
     //buffers
     RenderBuffer reflectBuffer = RenderBuffer(Vector2{ (float)screenWidth, (float)screenHeight });
@@ -200,6 +201,7 @@ void water3Main(int argc, const char** argv)
         node.transform.size.y = 0.5f;
         node.meshInstance = &meshTerrain;
         node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureTerrain;
+        node.material.shader = shaderBase;
     }
 
     //add water node
@@ -207,8 +209,8 @@ void water3Main(int argc, const char** argv)
         Node3D& node = nodes.emplace();
         node.layer = NodeDrawLayer_Water;
         node.meshInstance = &meshWaterSurface;
-        node.material.shader = waterShader;
         node.material.maps[MATERIAL_MAP_DIFFUSE].color = GetColor(0xD1E5F4FF);
+        node.material.shader = shaderWater;
     }
 
     // Main game loop
@@ -237,12 +239,13 @@ void water3Main(int argc, const char** argv)
         //----------------------------------------------------------------------------------
         BeginDrawing();
         ClearBackground(DARKBLUE);
+
         reflectBuffer.Render(RED, [=]() mutable {
-            camera.position.y *= -1;
+            //camera.position.y *= -1;
             BeginMode3D(camera);
                 nodes.Render(NodeDrawLayer_World);
             EndMode3D();
-            camera.position.y *= -1;
+            //camera.position.y *= -1;
             });
 
             //draw scene
@@ -276,6 +279,6 @@ void water3Main(int argc, const char** argv)
     UnloadTexture(textureTerrain);
     UnloadMesh(meshTerrain);
 
-    UnloadShader(waterShader);
+    UnloadShader(shaderWater);
     CloseWindow();        // Close window and OpenGL context
 }
