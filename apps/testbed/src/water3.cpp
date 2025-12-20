@@ -48,21 +48,68 @@ struct RenderBuffer
 {
     RenderBuffer(Vector2 size)
     {
-        buffer = LoadRenderTexture((int)size.x, (int)size.y);
+        Load((int)size.x, (int)size.y);
         SetTextureFilter(buffer.texture, TEXTURE_FILTER_BILINEAR);
+
     }
     ~RenderBuffer()
     {
-        UnloadRenderTexture(buffer);
+        Unload();
     }
     RenderBuffer(const RenderBuffer& o) = delete;
     void operator=(RenderBuffer const&) = delete;
 
+    void Load(int width, int height)
+    {
+        buffer.id = rlLoadFramebuffer(); // Load an empty framebuffer
+
+        if (buffer.id > 0)
+        {
+            rlEnableFramebuffer(buffer.id);
+
+            // Create color texture (default to RGBA)
+            buffer.texture.id = rlLoadTexture(0, width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
+            buffer.texture.width = width;
+            buffer.texture.height = height;
+            buffer.texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+            buffer.texture.mipmaps = 1;
+
+            // Create depth texture buffer (instead of raylib default renderbuffer)
+            buffer.depth.id = rlLoadTextureDepth(width, height, false);
+            buffer.depth.width = width;
+            buffer.depth.height = height;
+            buffer.depth.format = 19;       // DEPTH_COMPONENT_24BIT: Not defined in raylib
+            buffer.depth.mipmaps = 1;
+
+            // Attach color texture and depth texture to FBO
+            rlFramebufferAttach(buffer.id, buffer.texture.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+            rlFramebufferAttach(buffer.id, buffer.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_TEXTURE2D, 0);
+
+            // Check if fbo is complete with attachments (valid)
+            if (rlFramebufferComplete(buffer.id)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", buffer.id);
+
+            rlDisableFramebuffer();
+        }
+        else TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created");
+    }
+    void Unload()
+    {
+        if (buffer.id > 0)
+        {
+            // Color texture attached to FBO is deleted
+            rlUnloadTexture(buffer.texture.id);
+            rlUnloadTexture(buffer.depth.id);
+
+            // NOTE: Depth texture is automatically
+            // queried and deleted before deleting framebuffer
+            rlUnloadFramebuffer(buffer.id);
+        }
+    }
 
     void handleScreenResize(Vector2 newSize)
     {
-        UnloadRenderTexture(buffer);
-        buffer = LoadRenderTexture((int)newSize.x, (int)newSize.y);
+        Unload();
+        Load((int)newSize.x, (int)newSize.y);
         SetTextureFilter(buffer.texture, TEXTURE_FILTER_BILINEAR);
     }
 
@@ -73,6 +120,16 @@ struct RenderBuffer
         ClearBackground(clearColor);
         onRender();
         EndTextureMode();
+    }
+
+    void DrawAsTexture(Rectangle destination) const
+    {
+        DrawTexturePro(
+            buffer.texture,
+            Rectangle{ 0, 0,buffer.texture.width * 1.0f,buffer.texture.height * -1.0f },
+            destination,
+            Vector2{ 0.0f,0.0f }, 0.0f, WHITE
+        );
     }
 
     RenderTexture2D buffer;
@@ -151,6 +208,7 @@ void water3Main(int argc, const char** argv)
         node.layer = NodeDrawLayer_Water;
         node.meshInstance = &meshWaterSurface;
         node.material.shader = waterShader;
+        node.material.maps[MATERIAL_MAP_DIFFUSE].color = GetColor(0xD1E5F4FF);
     }
 
     // Main game loop
@@ -179,6 +237,15 @@ void water3Main(int argc, const char** argv)
         //----------------------------------------------------------------------------------
         BeginDrawing();
         ClearBackground(DARKBLUE);
+        reflectBuffer.Render(RED, [=]() mutable {
+            camera.position.y *= -1;
+            BeginMode3D(camera);
+                nodes.Render(NodeDrawLayer_World);
+            EndMode3D();
+            camera.position.y *= -1;
+            });
+
+            //draw scene
         BeginMode3D(camera);
             nodes.Render(NodeDrawLayer_All);
         EndMode3D();
@@ -192,6 +259,13 @@ void water3Main(int argc, const char** argv)
 
         if (isShowControls)
         {
+            float width = screenWidth / 3.0f;
+            float ratio = (float)screenWidth / (float)screenHeight;
+            float height = (width * screenHeight) / screenWidth * 1.0f;
+
+            reflectBuffer.DrawAsTexture(Rectangle{ 0, 0, width, height });
+
+
             static const float messageHeight = 100;
             DrawRectangle(0, screenHeight - messageHeight, screenWidth, messageHeight, ColorAlpha(BLACK, 0.65f));
             DrawText("Put Instructions Here", 10, screenHeight - messageHeight + 10, 20, WHITE);
