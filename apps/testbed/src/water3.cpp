@@ -1,9 +1,20 @@
 #include "waters.hpp"
 #include <jam/modules/core3d/components/transform3d.hpp>
 #include <vector>
+#include <functional>
 
+enum NodeDrawLayer
+{
+    NodeDrawLayer_None = 0,
+    NodeDrawLayer_World = 1 << 0,
+    NodeDrawLayer_Billboard = 1 << 1,
+    NodeDrawLayer_Water = 1 << 2,
+
+    NodeDrawLayer_All = NodeDrawLayer_World | NodeDrawLayer_Billboard | NodeDrawLayer_Water
+};
 struct Node3D
 {
+    int layer = NodeDrawLayer_World;
     jam::components::Transform3D transform;
     Mesh* meshInstance = nullptr;
     Material material = LoadMaterialDefault();
@@ -14,6 +25,58 @@ struct Node3D
     }
 };
 
+struct NodeManager
+{
+    std::vector<Node3D> nodes;
+
+    Node3D& emplace()
+    {
+        return nodes.emplace_back();
+    }
+
+    void Render(int layer) const
+    {
+        for (auto&& node : nodes)
+        {
+            if ((node.layer & layer) != 0)
+                node.Render();
+        }
+    }
+};
+
+struct RenderBuffer
+{
+    RenderBuffer(Vector2 size)
+    {
+        buffer = LoadRenderTexture((int)size.x, (int)size.y);
+        SetTextureFilter(buffer.texture, TEXTURE_FILTER_BILINEAR);
+    }
+    ~RenderBuffer()
+    {
+        UnloadRenderTexture(buffer);
+    }
+    RenderBuffer(const RenderBuffer& o) = delete;
+    void operator=(RenderBuffer const&) = delete;
+
+
+    void handleScreenResize(Vector2 newSize)
+    {
+        UnloadRenderTexture(buffer);
+        buffer = LoadRenderTexture((int)newSize.x, (int)newSize.y);
+        SetTextureFilter(buffer.texture, TEXTURE_FILTER_BILINEAR);
+    }
+
+    template<typename RenderFunction>
+    void Render(Color clearColor, RenderFunction onRender)
+    {
+        BeginTextureMode(buffer);
+        ClearBackground(clearColor);
+        onRender();
+        EndTextureMode();
+    }
+
+    RenderTexture2D buffer;
+};
 
 void water3Main(int argc, const char** argv)
 {
@@ -35,13 +98,22 @@ void water3Main(int argc, const char** argv)
 
     // Load Resources
     //--------------------------------------------------------------------------------------
+    //textures
     Image heightmap = LoadImage("heightmap.png");
-    Mesh meshTerrain = GenMeshHeightmap(heightmap, Vector3{ 1, 1,1 });
     Texture2D textureTerrain = LoadTextureFromImage(heightmap);
+
+    //meshes
+    Mesh meshTerrain = GenMeshHeightmap(heightmap, Vector3{ 1, 1,1 });
+    Mesh meshWaterSurface = GenMeshPlane(100, 100, 100, 100);
+
+    //shaders
+    Shader waterShader = LoadShader("shaders/waterTile.vert.glsl", "shaders/waterTile.frag.glsl");
+
+    //buffers
+    RenderBuffer reflectBuffer = RenderBuffer(Vector2{ (float)screenWidth, (float)screenHeight });
+    RenderBuffer refractBuffer = RenderBuffer(Vector2{ (float)screenWidth, (float)screenHeight });
+
     UnloadImage(heightmap);
-
-
-
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
     // variables
@@ -61,17 +133,26 @@ void water3Main(int argc, const char** argv)
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    std::vector<Node3D> nodes;
+    NodeManager nodes;
 
     //add terrain node
     {
-        Node3D& node = nodes.emplace_back();
+        Node3D& node = nodes.emplace();
         node.transform.scale = 55.0f;
         node.transform.position = { -node.transform.scale/2 , -3.75f, -node.transform.scale/2};
         node.transform.size.y = 0.5f;
         node.meshInstance = &meshTerrain;
         node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureTerrain;
     }
+
+    //add water node
+    {
+        Node3D& node = nodes.emplace();
+        node.layer = NodeDrawLayer_Water;
+        node.meshInstance = &meshWaterSurface;
+        node.material.shader = waterShader;
+    }
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -99,8 +180,7 @@ void water3Main(int argc, const char** argv)
         BeginDrawing();
         ClearBackground(DARKBLUE);
         BeginMode3D(camera);
-            DrawGrid(50, 1.0f);
-            for (auto& node : nodes) node.Render();
+            nodes.Render(NodeDrawLayer_All);
         EndMode3D();
 
         if (isPaused)
@@ -122,5 +202,6 @@ void water3Main(int argc, const char** argv)
     UnloadTexture(textureTerrain);
     UnloadMesh(meshTerrain);
 
+    UnloadShader(waterShader);
     CloseWindow();        // Close window and OpenGL context
 }
