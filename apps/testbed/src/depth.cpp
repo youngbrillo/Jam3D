@@ -34,6 +34,16 @@ static void UnloadRenderTextureDepthTex(RenderTexture2D target);
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
+
+static void drawRenderTexturePro(RenderTexture2D buffer, Rectangle destination, bool drawDepth)
+{
+    DrawTexturePro(
+        drawDepth ? buffer.depth : buffer.texture,
+        Rectangle{ 0, 0,buffer.texture.width * 1.0f,buffer.texture.height * -1.0f },
+        destination,
+        Vector2{ 0.0f,0.0f }, 0.0f, WHITE
+    );
+}
 void depthMain(int argc, const char** argv)
 {
     // Initialization
@@ -63,6 +73,7 @@ void depthMain(int argc, const char** argv)
 
     // Load render texture with a depth texture attached
     RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
+    RenderTexture2D depthTarget = LoadRenderTexture(screenWidth, screenHeight);
 
     // Load depth shader and get depth texture shader location
     Shader depthShader = LoadShader(0, "shaders/depth.frag.glsl");
@@ -75,7 +86,7 @@ void depthMain(int argc, const char** argv)
     Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
     Model floor = LoadModelFromMesh(GenMeshPlane(20.0f, 20.0f, 1, 1));
 
-    DisableCursor();  // Limit cursor to relative movement inside the window
+    //DisableCursor();  // Limit cursor to relative movement inside the window
 
     SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -85,28 +96,37 @@ void depthMain(int argc, const char** argv)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera, CAMERA_FREE);
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+            UpdateCamera(&camera, CAMERA_FREE);
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginTextureMode(target);
-        ClearBackground(WHITE);
+            ClearBackground(WHITE);
 
-        BeginMode3D(camera);
-        DrawModel(cube, Vector3 { 0.0f, 0.0f, 0.0f }, 3.0f, YELLOW);
-        DrawModel(floor, Vector3 { 10.0f, 0.0f, 2.0f }, 2.0f, RED);
-        EndMode3D();
+            BeginMode3D(camera);
+            DrawModel(cube, Vector3 { 0.0f, 0.0f, 0.0f }, 3.0f, YELLOW);
+            DrawModel(floor, Vector3 { 10.0f, 0.0f, 2.0f }, 2.0f, RED);
+            EndMode3D();
         EndTextureMode();
 
+        BeginTextureMode(depthTarget);
+            ClearBackground(GREEN);
+
+            BeginShaderMode(depthShader);
+            SetShaderValueTexture(depthShader, depthLoc, target.depth);
+            DrawTexture(target.depth, 0, 0, WHITE);
+            EndShaderMode();
+        EndTextureMode();
         // Draw into screen (main framebuffer)
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        BeginShaderMode(depthShader);
-        SetShaderValueTexture(depthShader, depthLoc, target.depth);
-        DrawTexture(target.depth, 0, 0, WHITE);
-        EndShaderMode();
+        BeginMode3D(camera);
+        DrawModel(cube, Vector3{ 0.0f, 0.0f, 0.0f }, 3.0f, YELLOW);
+        DrawModel(floor, Vector3{ 10.0f, 0.0f, 2.0f }, 2.0f, RED);
+        EndMode3D();
 
         DrawRectangle(10, 10, 320, 93, Fade(SKYBLUE, 0.5f));
         DrawRectangleLines(10, 10, 320, 93, BLUE);
@@ -115,6 +135,19 @@ void depthMain(int argc, const char** argv)
         DrawText("- WASD to move", 40, 40, 10, DARKGRAY);
         DrawText("- Mouse Wheel Pressed to Pan", 40, 60, 10, DARKGRAY);
         DrawText("- Z to zoom to (0, 0, 0)", 40, 80, 10, DARKGRAY);
+
+
+        if (IsKeyDown(KEY_TAB))
+        {
+            float width = screenWidth / 3.0f;
+            float height = (width * screenHeight) / screenWidth * 1.0f;
+            float y = screenHeight - height;
+
+            drawRenderTexturePro(target, Rectangle{ 0, y, width, height }, false);
+            drawRenderTexturePro(depthTarget, Rectangle{ width, y, width, height }, false);
+
+        }
+
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -125,6 +158,8 @@ void depthMain(int argc, const char** argv)
     UnloadModel(cube);              // Unload model
     UnloadModel(floor);             // Unload model
     UnloadRenderTextureDepthTex(target);
+    UnloadRenderTexture(depthTarget);
+
     UnloadShader(depthShader);      // Unload shader
 
     CloseWindow();        // Close window and OpenGL context

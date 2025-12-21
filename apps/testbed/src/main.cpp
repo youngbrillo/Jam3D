@@ -3,6 +3,6 @@
 
 int main(int argc, const char** argv)
 {
-	//water2Main(argc, argv);
-	depthMain(argc, argv);
+	water3Main(argc, argv);
+	//depthMain(argc, argv);
 }

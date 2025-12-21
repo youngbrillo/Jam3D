@@ -4,6 +4,8 @@
 #include <functional>
 #include <assert.h>
 
+#define USE_DEFAULT_DEPTH_BUFFER_TECH
+
 enum NodeDrawLayer
 {
     NodeDrawLayer_None = 0,
@@ -51,72 +53,33 @@ struct NodeManager
     }
 };
 
-struct RenderBuffer
+// Load custom render texture with depth texture attached
+static RenderTexture2D LoadRenderTextureDepthTex(int width, int height);
+// Unload render texture from GPU memory (VRAM)
+static void UnloadRenderTextureDepthTex(RenderTexture2D target);
+
+
+
+struct RenderBufferPro
 {
-    RenderBuffer(Vector2 size)
+    RenderBufferPro(Vector2 size)
     {
-        Load((int)size.x, (int)size.y);
+        buffer = LoadRenderTextureDepthTex((int)size.x, (int)size.y);
         SetTextureFilter(buffer.texture, TEXTURE_FILTER_BILINEAR);
 
     }
-    ~RenderBuffer()
+    ~RenderBufferPro()
     {
-        Unload();
+        UnloadRenderTextureDepthTex(buffer);
     }
-    RenderBuffer(const RenderBuffer& o) = delete;
-    void operator=(RenderBuffer const&) = delete;
+    RenderBufferPro(const RenderBufferPro& o) = delete;
+    void operator=(RenderBufferPro const&) = delete;
 
-    void Load(int width, int height)
-    {
-        buffer.id = rlLoadFramebuffer(); // Load an empty framebuffer
-
-        if (buffer.id > 0)
-        {
-            rlEnableFramebuffer(buffer.id);
-
-            // Create color texture (default to RGBA)
-            buffer.texture.id = rlLoadTexture(0, width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
-            buffer.texture.width = width;
-            buffer.texture.height = height;
-            buffer.texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-            buffer.texture.mipmaps = 1;
-
-            // Create depth texture buffer (instead of raylib default renderbuffer)
-            buffer.depth.id = rlLoadTextureDepth(width, height, false);
-            buffer.depth.width = width;
-            buffer.depth.height = height;
-            buffer.depth.format = 19;       // DEPTH_COMPONENT_24BIT: Not defined in raylib
-            buffer.depth.mipmaps = 1;
-
-            // Attach color texture and depth texture to FBO
-            rlFramebufferAttach(buffer.id, buffer.texture.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
-            rlFramebufferAttach(buffer.id, buffer.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_TEXTURE2D, 0);
-
-            // Check if fbo is complete with attachments (valid)
-            if (rlFramebufferComplete(buffer.id)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", buffer.id);
-
-            rlDisableFramebuffer();
-        }
-        else TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created");
-    }
-    void Unload()
-    {
-        if (buffer.id > 0)
-        {
-            // Color texture attached to FBO is deleted
-            rlUnloadTexture(buffer.texture.id);
-            rlUnloadTexture(buffer.depth.id);
-
-            // NOTE: Depth texture is automatically
-            // queried and deleted before deleting framebuffer
-            rlUnloadFramebuffer(buffer.id);
-        }
-    }
 
     void handleScreenResize(Vector2 newSize)
     {
-        Unload();
-        Load((int)newSize.x, (int)newSize.y);
+        UnloadRenderTextureDepthTex(buffer);
+        buffer = LoadRenderTextureDepthTex((int)newSize.x, (int)newSize.y);
         SetTextureFilter(buffer.texture, TEXTURE_FILTER_BILINEAR);
     }
 
@@ -129,10 +92,10 @@ struct RenderBuffer
         EndTextureMode();
     }
 
-    void DrawAsTexture(Rectangle destination) const
+    void DrawAsTexture(Rectangle destination, bool drawDepth) const
     {
         DrawTexturePro(
-            buffer.texture,
+            drawDepth ? buffer.depth : buffer.texture ,
             Rectangle{ 0, 0,buffer.texture.width * 1.0f,buffer.texture.height * -1.0f },
             destination,
             Vector2{ 0.0f,0.0f }, 0.0f, WHITE
@@ -141,6 +104,18 @@ struct RenderBuffer
 
     RenderTexture2D buffer;
 };
+
+
+
+static void RenderTexture2DDraw(RenderTexture2D buffer, Rectangle destination, bool drawDepth)
+{
+    DrawTexturePro(
+        drawDepth ? buffer.depth : buffer.texture,
+        Rectangle{ 0, 0,buffer.texture.width * 1.0f,buffer.texture.height * -1.0f },
+        destination,
+        Vector2{ 0.0f,0.0f }, 0.0f, WHITE
+    );
+}
 
 
 struct UniformsWater
@@ -207,9 +182,11 @@ void water3Main(int argc, const char** argv)
     //--------------------------------------------------------------------------------------
     //textures
     Image heightmap = LoadImage("heightmap.png");
+    Image checked = GenImageChecked(512, 512, 8, 7, WHITE, LIGHTGRAY);
     Texture2D textureTerrain = LoadTextureFromImage(heightmap);
     Texture2D textureDUDV = LoadTexture("dudv.png");
     Texture2D textureNormalmap = LoadTexture("normal.png");
+    Texture2D textureChecked = LoadTextureFromImage(checked);
 
     SetTextureFilter(textureTerrain, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(textureDUDV, TEXTURE_FILTER_BILINEAR);
@@ -221,15 +198,27 @@ void water3Main(int argc, const char** argv)
 
     //shaders
     Shader shaderBase   = LoadShader("shaders3/base.vert.glsl", "shaders3/base.frag.glsl");
-    Shader shaderWater  = LoadShader("shaders3/water.vert.glsl", "shaders3/water.frag.glsl");
+    Shader shaderWater = LoadShader("shaders3/water.vert.glsl", "shaders3/water.frag.glsl");
+    Shader shaderDepth = LoadShader(0, "shaders/depth.frag.glsl");
 
     assert(IsShaderValid(shaderBase) && "Base Shader is invalid!");
     assert(IsShaderValid(shaderWater) && "Water Shader is invalid!");
+    assert(IsShaderValid(shaderDepth) && "Depth Shader is invalid!");
     //buffers
-    RenderBuffer reflectBuffer = RenderBuffer(Vector2{ (float)screenWidth, (float)screenHeight });
-    RenderBuffer refractBuffer = RenderBuffer(Vector2{ (float)screenWidth, (float)screenHeight });
+    RenderBufferPro reflectBuffer = RenderBufferPro(Vector2{ (float)screenWidth, (float)screenHeight });
+    RenderBufferPro refractBuffer = RenderBufferPro(Vector2{ (float)screenWidth, (float)screenHeight });
+    //RenderBuffer depthBuffer   = RenderBuffer(Vector2{ (float)screenWidth, (float)screenHeight });
+    RenderTexture2D depthBuffer = LoadRenderTexture(screenWidth, screenHeight);
+
+
+    int depthLoc = GetShaderLocation(shaderDepth, "depthTexture");
+    int flipTextureLoc = GetShaderLocation(shaderDepth, "flipY");
+    int flipVal = 1;
+    SetShaderValue(shaderDepth, flipTextureLoc, &flipVal, SHADER_UNIFORM_INT); // Flip Y texture
+
 
     UnloadImage(heightmap);
+    UnloadImage(checked);
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
     // variables
@@ -259,7 +248,8 @@ void water3Main(int argc, const char** argv)
         node.transform.position = { -node.transform.scale/2 , -3.75f, -node.transform.scale/2};
         node.transform.size.y = 0.5f;
         node.meshInstance = &meshTerrain;
-        node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureTerrain;
+        node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureChecked;
+        node.material.maps[MATERIAL_MAP_DIFFUSE].color = ORANGE;
         node.material.shader = shaderBase;
     }
 
@@ -275,6 +265,8 @@ void water3Main(int argc, const char** argv)
         node.material.maps[MATERIAL_MAP_ROUGHNESS].texture = textureNormalmap;
         node.material.shader = shaderWater;
     }
+
+
 
     UniformsWater waterUniforms;
     waterUniforms.Set(shaderWater, camera, textureNormalmap, elapsedTime, 0);
@@ -325,27 +317,39 @@ void water3Main(int argc, const char** argv)
             elapsedTime += deltaTime;
         }
 
-        waterUniforms.Update(shaderWater, camera, elapsedTime, deltaTime);
+    waterUniforms.Update(shaderWater, camera, elapsedTime, deltaTime);
+    ClearBackground(DARKBLUE);
+        //draw reflect buffer
+        reflectBuffer.Render(GREEN, [=]() mutable {
+            camera.position.y *= -1;
+            BeginMode3D(camera);
+                nodes.Render(NodeDrawLayer_World);
+            EndMode3D();
+            camera.position.y *= -1;
+            });
+
+        //draw refract buffer
+        refractBuffer.Render(RED, [=]() mutable {
+            BeginMode3D(camera);
+            nodes.Render(NodeDrawLayer_World);
+            EndMode3D();
+            });
+        //drawing the depth buffer
+            //I'm going to cheat here since the refreactBuffer has everything we want in it already..
+            //or not
+
+        BeginTextureMode(depthBuffer);
+            ClearBackground(YELLOW);
+            BeginShaderMode(shaderDepth);
+                SetShaderValueTexture(shaderDepth, depthLoc, refractBuffer.buffer.depth);
+                DrawTexture(refractBuffer.buffer.depth, 0, 0, WHITE);
+            EndShaderMode();
+        EndTextureMode();
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        ClearBackground(DARKBLUE);
-            //draw reflect buffer
-            reflectBuffer.Render(BLUE, [=]() mutable {
-                camera.position.y *= -1;
-                BeginMode3D(camera);
-                    nodes.Render(NodeDrawLayer_World);
-                EndMode3D();
-                camera.position.y *= -1;
-                });
-
-            //draw refract buffer
-            refractBuffer.Render(BLUE, [=]() mutable {
-                BeginMode3D(camera);
-                nodes.Render(NodeDrawLayer_World);
-                EndMode3D();
-                });
-            //draw scene
+         //draw scene
             BeginMode3D(camera);
                 nodes.Render(NodeDrawLayer_All);
             EndMode3D();
@@ -359,13 +363,15 @@ void water3Main(int argc, const char** argv)
 
         if (isShowControls)
         {
-            float width = screenWidth / 3.0f;
+            float width = screenWidth / 4.0f;
             float ratio = (float)screenWidth / (float)screenHeight;
             float height = (width * screenHeight) / screenWidth * 1.0f;
 
-            reflectBuffer.DrawAsTexture(Rectangle{ 0, 0, width, height });
-            refractBuffer.DrawAsTexture(Rectangle{ width, 0, width, height });
-
+            reflectBuffer.DrawAsTexture(Rectangle{ width*0, 0, width, height },false);
+            refractBuffer.DrawAsTexture(Rectangle{ width*1, 0, width, height }, false);
+            refractBuffer.DrawAsTexture(Rectangle{ width*2, 0, width, height }, true);
+            //depthBuffer.DrawAsTexture(  Rectangle{ width*3, 0, width, height }, false);
+            RenderTexture2DDraw(depthBuffer, Rectangle{ width * 3, 0, width, height }, false);
 
             static const float messageHeight = 100;
             DrawRectangle(0, screenHeight - messageHeight, screenWidth, messageHeight, ColorAlpha(BLACK, 0.65f));
@@ -383,5 +389,66 @@ void water3Main(int argc, const char** argv)
 
     UnloadShader(shaderWater);
     UnloadShader(shaderBase);
+    UnloadShader(shaderDepth);
+
     CloseWindow();        // Close window and OpenGL context
+}
+
+
+//--------------------------------------------------------------------------------------
+// Module Functions Definition
+//--------------------------------------------------------------------------------------
+// Load custom render texture, create a writable depth texture buffer
+static RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
+{
+    RenderTexture2D target = { 0 };
+
+    target.id = rlLoadFramebuffer(); // Load an empty framebuffer
+
+    if (target.id > 0)
+    {
+        rlEnableFramebuffer(target.id);
+
+        // Create color texture (default to RGBA)
+        target.texture.id = rlLoadTexture(0, width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
+        target.texture.width = width;
+        target.texture.height = height;
+        target.texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+        target.texture.mipmaps = 1;
+
+        // Create depth texture buffer (instead of raylib default renderbuffer)
+        target.depth.id = rlLoadTextureDepth(width, height, false);
+        target.depth.width = width;
+        target.depth.height = height;
+        target.depth.format = 19;       // DEPTH_COMPONENT_24BIT: Not defined in raylib
+        target.depth.mipmaps = 1;
+
+        // Attach color texture and depth texture to FBO
+        rlFramebufferAttach(target.id, target.texture.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+        rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_TEXTURE2D, 0);
+
+        // Check if fbo is complete with attachments (valid)
+        if (rlFramebufferComplete(target.id)) 
+            TRACELOG(LOG_INFO, "FBO: [ID %i][%i | %i] Framebuffer object created successfully", target.id, target.texture.id, target.depth.id);
+
+        rlDisableFramebuffer();
+    }
+    else TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created");
+
+    return target;
+}
+
+// Unload render texture from GPU memory (VRAM)
+void UnloadRenderTextureDepthTex(RenderTexture2D target)
+{
+    if (target.id > 0)
+    {
+        // Color texture attached to FBO is deleted
+        rlUnloadTexture(target.texture.id);
+        rlUnloadTexture(target.depth.id);
+
+        // NOTE: Depth texture is automatically
+        // queried and deleted before deleting framebuffer
+        rlUnloadFramebuffer(target.id);
+    }
 }
