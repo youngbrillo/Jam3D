@@ -2,6 +2,7 @@
 #include <jam/modules/core3d/components/transform3d.hpp>
 #include <vector>
 #include <functional>
+#include <assert.h>
 
 enum NodeDrawLayer
 {
@@ -41,6 +42,12 @@ struct NodeManager
             if ((node.layer & layer) != 0)
                 node.Render();
         }
+    }
+
+    Node3D& getLast()
+    {
+        assert(nodes.size() != 0 && "nodes vector is empty!");
+        return nodes.at(nodes.size() - 1);
     }
 };
 
@@ -135,6 +142,42 @@ struct RenderBuffer
     RenderTexture2D buffer;
 };
 
+
+struct UniformsWater
+{
+    struct {
+        int locTime = -1;
+        int locMoveFactor = -1;
+        int viewPositionLoc = -1;
+    } uniforms;
+
+    struct {
+        float moveFactor = 0.0f;
+        float moveSpeed = 0.025f;
+    } values;
+
+    void Set(Shader shader, Camera3D camera, float time, float dt)
+    {
+        uniforms.locTime = GetShaderLocation(shader, "time");
+        uniforms.locMoveFactor = GetShaderLocation(shader, "waveMoveSpeed");
+        uniforms.viewPositionLoc = GetShaderLocation(shader, "viewPosition");
+        values.moveFactor = 0.0f;
+
+        Update(shader, camera, time, dt);
+    }
+
+    void Update(Shader shader, Camera3D camera, float time, float dt)
+    {
+        values.moveFactor += dt * values.moveSpeed;
+        if (values.moveFactor > 1.0f)
+            values.moveFactor -= 1.0f;
+
+        SetShaderValue(shader, uniforms.locTime, &time, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(shader, uniforms.locMoveFactor, &values.moveFactor, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(shader, uniforms.viewPositionLoc, &camera.position.x, SHADER_UNIFORM_VEC3);
+    }
+};
+
 void water3Main(int argc, const char** argv)
 {
     // Initialization
@@ -158,6 +201,8 @@ void water3Main(int argc, const char** argv)
     //textures
     Image heightmap = LoadImage("heightmap.png");
     Texture2D textureTerrain = LoadTextureFromImage(heightmap);
+    Texture2D textureDUDV = LoadTexture("dudv.png");
+
 
     //meshes
     Mesh meshTerrain = GenMeshHeightmap(heightmap, Vector3{ 1, 1,1 });
@@ -167,6 +212,8 @@ void water3Main(int argc, const char** argv)
     Shader shaderBase   = LoadShader("shaders3/base.vert.glsl", "shaders3/base.frag.glsl");
     Shader shaderWater  = LoadShader("shaders3/water.vert.glsl", "shaders3/water.frag.glsl");
 
+    assert(IsShaderValid(shaderBase) && "Base Shader is invalid!");
+    assert(IsShaderValid(shaderWater) && "Water Shader is invalid!");
     //buffers
     RenderBuffer reflectBuffer = RenderBuffer(Vector2{ (float)screenWidth, (float)screenHeight });
     RenderBuffer refractBuffer = RenderBuffer(Vector2{ (float)screenWidth, (float)screenHeight });
@@ -180,6 +227,7 @@ void water3Main(int argc, const char** argv)
     bool isShowControls = false;
     bool isWireFrameMode = false;
     float elapsedTime = 0.0f;
+    float deltaTime = 0.0f;
 
     // game objects
     //--------------------------------------------------------------------------------------
@@ -210,9 +258,14 @@ void water3Main(int argc, const char** argv)
         node.layer = NodeDrawLayer_Water;
         node.meshInstance = &meshWaterSurface;
         node.material.maps[MATERIAL_MAP_DIFFUSE].color = GetColor(0xD1E5F4FF);
+        node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureDUDV;
         node.material.shader = shaderWater;
+        node.material.maps[MATERIAL_MAP_SPECULAR].texture = reflectBuffer.buffer.texture;
+        node.material.maps[MATERIAL_MAP_NORMAL].texture = refractBuffer.buffer.texture;
     }
 
+    UniformsWater waterUniforms;
+    waterUniforms.Set(shaderWater, camera, elapsedTime, 0);
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -225,7 +278,24 @@ void water3Main(int argc, const char** argv)
 
         if (isShowControls && IsKeyPressed(KEY_R))
         {
-            TraceLog(LOG_INFO, "Reload Resource Here!");
+            TraceLog(LOG_INFO, "Reloading  Water shader!");
+            UnloadShader(shaderWater);
+            shaderWater = LoadShader("shaders3/water.vert.glsl", "shaders3/water.frag.glsl");
+
+            if (IsShaderValid(shaderWater))
+            {
+                Node3D& node = nodes.getLast();
+                node.material.shader = shaderWater;
+                node.material.maps[MATERIAL_MAP_SPECULAR].texture = reflectBuffer.buffer.texture;
+                node.material.maps[MATERIAL_MAP_NORMAL].texture = refractBuffer.buffer.texture;
+
+                //int reflectTextureLoc = GetShaderLocation(shaderWater, "reflectTexture");
+                //int refractTextureLoc = GetShaderLocation(shaderWater, "refractTexture");
+                //SetShaderValueTexture(shaderWater, reflectTextureLoc, reflectBuffer.buffer.texture);
+                //SetShaderValueTexture(shaderWater, refractTextureLoc, refractBuffer.buffer.texture);
+                waterUniforms.Set(shaderWater, camera, elapsedTime, 0);
+            }
+
         }
         if (isShowControls && IsKeyPressed(KEY_P))
             isPaused = !isPaused;
@@ -233,25 +303,40 @@ void water3Main(int argc, const char** argv)
         if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
             UpdateCamera(&camera, CAMERA_THIRD_PERSON);
 
-        if (!isPaused)
-            elapsedTime += GetFrameTime();
+        if (isPaused)
+        {
+            deltaTime = 0.0f;
+        }
+        else
+        {
+            deltaTime = GetFrameTime();
+            elapsedTime += deltaTime;
+        }
+
+        waterUniforms.Update(shaderWater, camera, elapsedTime, deltaTime);
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
         ClearBackground(DARKBLUE);
+            //draw reflect buffer
+            reflectBuffer.Render(BLUE, [=]() mutable {
+                camera.position.y *= -1;
+                BeginMode3D(camera);
+                    nodes.Render(NodeDrawLayer_World);
+                EndMode3D();
+                camera.position.y *= -1;
+                });
 
-        reflectBuffer.Render(RED, [=]() mutable {
-            //camera.position.y *= -1;
-            BeginMode3D(camera);
+            //draw refract buffer
+            refractBuffer.Render(BLUE, [=]() mutable {
+                BeginMode3D(camera);
                 nodes.Render(NodeDrawLayer_World);
-            EndMode3D();
-            //camera.position.y *= -1;
-            });
-
+                EndMode3D();
+                });
             //draw scene
-        BeginMode3D(camera);
-            nodes.Render(NodeDrawLayer_All);
-        EndMode3D();
+            BeginMode3D(camera);
+                nodes.Render(NodeDrawLayer_All);
+            EndMode3D();
 
         if (isPaused)
         {
@@ -267,6 +352,7 @@ void water3Main(int argc, const char** argv)
             float height = (width * screenHeight) / screenWidth * 1.0f;
 
             reflectBuffer.DrawAsTexture(Rectangle{ 0, 0, width, height });
+            refractBuffer.DrawAsTexture(Rectangle{ width, 0, width, height });
 
 
             static const float messageHeight = 100;
@@ -278,7 +364,9 @@ void water3Main(int argc, const char** argv)
 
     UnloadTexture(textureTerrain);
     UnloadMesh(meshTerrain);
+    UnloadTexture(textureDUDV);
 
     UnloadShader(shaderWater);
+    UnloadShader(shaderBase);
     CloseWindow();        // Close window and OpenGL context
 }

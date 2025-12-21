@@ -1,26 +1,28 @@
 #version 330
-
-// Input vertex attributes
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
-in vec3 vertexNormal;
 in vec4 vertexColor;
 
-// Input uniform values
-uniform mat4 mvp;
-
-// Output vertex attributes (to fragment shader)
 out vec2 fragTexCoord;
 out vec4 fragColor;
+out vec4 worldSpaceCoord;
+out vec3 worldPosition;
 
-// NOTE: Add here your custom variables
+uniform mat4 mvp;             // VS: ModelViewProjection matrix
+uniform mat4 matView;         // VS: View matrix
+uniform mat4 matProjection;   // VS: Projection matrix
+uniform mat4 matModel;        // VS: Model matrix
+uniform mat4 matNormal;       // VS: Normal matrix
+
+const float tiling = 6.0;
 
 void main()
 {
-    // Send vertex attributes to fragment shader
-    fragTexCoord = vertexTexCoord;
-    fragColor = vertexColor;
 
-    // Calculate final vertex position
-    gl_Position = mvp*vec4(vertexPosition, 1.0);
-}
+    fragTexCoord = vertexTexCoord * tiling;
+    fragColor = vertexColor;
+    worldSpaceCoord = mvp * vec4(vertexPosition, 1.0);
+    worldPosition = vec3(matModel * vec4(vertexPosition, 1.0));
+
+    gl_Position = worldSpaceCoord;
+}                                  
