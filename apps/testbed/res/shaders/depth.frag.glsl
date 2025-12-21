@@ -7,12 +7,22 @@ in vec2 fragTexCoord;
 uniform sampler2D depthTexture;
 uniform bool flipY;
 
-const float nearPlane = 0.1;
+const float nearPlane = 0.01;
 const float farPlane = 100.0;
 
 // Output fragment color
 out vec4 finalColor;
-
+  
+float LinearizeDepth(float depth) 
+{
+    // return (2.0 * nearPlane ) / (farPlane + nearPlane - depth * (farPlane - nearPlane));	
+    float far = farPlane;
+    float near = nearPlane;
+    float zNDC = 2 * depth - 1;
+    float zEye = (2* far * near)/ ((far + near) - zNDC * (far - near));
+    float linearDepth = (zEye - near) / (far - near);
+    return linearDepth;
+}
 void main()
 {
     // Handle potential Y-flipping
@@ -23,8 +33,8 @@ void main()
     float depth = texture(depthTexture, texCoord).r;
 
     // Linearize depth value
-    float linearDepth = (2.0*nearPlane)/(farPlane + nearPlane - depth*(farPlane - nearPlane));
-
+    // float linearDepth = (2.0*nearPlane)/(farPlane + nearPlane - depth*(farPlane - nearPlane));
+    float linearDepth = LinearizeDepth(depth);
     // Output final color
     finalColor = vec4(vec3(linearDepth), 1.0);
 }

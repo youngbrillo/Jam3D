@@ -125,6 +125,7 @@ struct UniformsWater
         int locMoveFactor = -1;
         int locViewPosition= -1;
         int locNormalMap = -1;
+        int locDepthBuffer = -1;
     } uniforms;
 
     struct {
@@ -138,9 +139,13 @@ struct UniformsWater
         uniforms.locMoveFactor = GetShaderLocation(shader, "waveMoveSpeed");
         uniforms.locViewPosition = GetShaderLocation(shader, "viewPosition");
         uniforms.locNormalMap = GetShaderLocation(shader, "texture3");
+        uniforms.locDepthBuffer = GetShaderLocation(shader, "texture4");
 
         int roughnessid = shader.locs[SHADER_LOC_MAP_ROUGHNESS];
+        int locDepthBuffer = shader.locs[SHADER_LOC_MAP_OCCLUSION];
+
         shader.locs[SHADER_LOC_MAP_ROUGHNESS] = uniforms.locNormalMap;
+        shader.locs[SHADER_LOC_MAP_OCCLUSION] = uniforms.locDepthBuffer;
         //SetShaderValueTexture(shader, uniforms.locNormalMap, normalTexture);
 
         values.moveFactor = 0.0f;
@@ -174,19 +179,21 @@ void water3Main(int argc, const char** argv)
         SetWindowMonitor(1);
         SetWindowSize(screenWidth, screenHeight);
     }
-
     const char* currentDirectory = GetWorkingDirectory();
     ChangeDirectory(TextFormat("%s/%s", currentDirectory, "apps\\testbed\\res"));
 
+    SetRandomSeed(1773);
     // Load Resources
     //--------------------------------------------------------------------------------------
     //textures
     Image heightmap = LoadImage("heightmap.png");
-    Image checked = GenImageChecked(512, 512, 8, 7, WHITE, LIGHTGRAY);
+    Image checkedSM = GenImageGradientLinear(96, 96, 180, WHITE, DARKGREEN);
+    Image checkedLG = GenImageChecked(512, 512, 8, 8, WHITE, LIGHTGRAY);
     Texture2D textureTerrain = LoadTextureFromImage(heightmap);
     Texture2D textureDUDV = LoadTexture("dudv.png");
     Texture2D textureNormalmap = LoadTexture("normal.png");
-    Texture2D textureChecked = LoadTextureFromImage(checked);
+    Texture2D textureCheckedSM = LoadTextureFromImage(checkedSM);
+    Texture2D textureCheckedLG = LoadTextureFromImage(checkedLG);
 
     SetTextureFilter(textureTerrain, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(textureDUDV, TEXTURE_FILTER_BILINEAR);
@@ -195,7 +202,7 @@ void water3Main(int argc, const char** argv)
     //meshes
     Mesh meshTerrain = GenMeshHeightmap(heightmap, Vector3{ 1, 1,1 });
     Mesh meshWaterSurface = GenMeshPlane(100, 100, 100, 100);
-
+    Mesh meshCube = GenMeshCube(1, 1, 1);
     //shaders
     Shader shaderBase   = LoadShader("shaders3/base.vert.glsl", "shaders3/base.frag.glsl");
     Shader shaderWater = LoadShader("shaders3/water.vert.glsl", "shaders3/water.frag.glsl");
@@ -218,7 +225,8 @@ void water3Main(int argc, const char** argv)
 
 
     UnloadImage(heightmap);
-    UnloadImage(checked);
+    UnloadImage(checkedSM);
+    UnloadImage(checkedLG);
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
     // variables
@@ -245,17 +253,45 @@ void water3Main(int argc, const char** argv)
     {
         Node3D& node = nodes.emplace();
         node.transform.scale = 55.0f;
-        node.transform.position = { -node.transform.scale/2 , -3.75f, -node.transform.scale/2};
+        node.transform.position = { -node.transform.scale/2 , -5.75f, -node.transform.scale/2};
         node.transform.size.y = 0.5f;
         node.meshInstance = &meshTerrain;
-        node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureChecked;
+        node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureCheckedLG;
         node.material.maps[MATERIAL_MAP_DIFFUSE].color = ORANGE;
         node.material.shader = shaderBase;
+    }
+
+    //add random that stick out of the water
+    int boundMin = 13, boundMax = 45;
+    for(int i = 0; i < 40; i++)
+    {
+        Node3D& node = nodes.emplace();
+
+        int quad1 = GetRandomValue(-1, 1);
+        if (quad1 == 0) quad1 = 1;
+        int quad2 = GetRandomValue(-1, 1);
+        if (quad2 == 0) quad2 = 1;
+
+        float x = quad1 * GetRandomValue(boundMin, boundMax) + GetRandomValue(-100, 100) / 100.0f;
+        float z = quad2 * GetRandomValue(boundMin, boundMax) + GetRandomValue(-100, 100) / 100.0f;
+
+        node.transform.position = { x, 0.0f, z};
+        node.transform.size.y = GetRandomValue(10, 20);
+
+        float angle = GetRandomValue(0, 90) + GetRandomValue(-100, 100) / 100.0f;
+        bool rotateAroundXAxis = GetRandomValue(0, 1);
+        node.transform.orientation = QuaternionFromAxisAngle(rotateAroundXAxis ? Vector3{ 1, 0, 0 } : Vector3{0, 0, 1}, angle * DEG2RAD);
+        node.meshInstance = &meshCube;
+
+
+        node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureCheckedSM;
+        //node.material.maps[MATERIAL_MAP_DIFFUSE].color = PINK;
     }
 
     //add water node
     {
         Node3D& node = nodes.emplace();
+        node.transform.scale = 10;
         node.layer = NodeDrawLayer_Water;
         node.meshInstance = &meshWaterSurface;
         node.material.maps[MATERIAL_MAP_DIFFUSE].color = GetColor(0xD1E5F4FF);
@@ -263,6 +299,7 @@ void water3Main(int argc, const char** argv)
         node.material.maps[MATERIAL_MAP_SPECULAR].texture = reflectBuffer.buffer.texture;
         node.material.maps[MATERIAL_MAP_NORMAL].texture = refractBuffer.buffer.texture;
         node.material.maps[MATERIAL_MAP_ROUGHNESS].texture = textureNormalmap;
+        node.material.maps[MATERIAL_MAP_OCCLUSION].texture = depthBuffer.texture;
         node.material.shader = shaderWater;
     }
 
@@ -270,6 +307,14 @@ void water3Main(int argc, const char** argv)
 
     UniformsWater waterUniforms;
     waterUniforms.Set(shaderWater, camera, textureNormalmap, elapsedTime, 0);
+
+    rlSetClipPlanes(0.001, 1000.0);
+
+    float near = rlGetCullDistanceNear();
+    float far = rlGetCullDistanceFar();
+    //bool isDepthTestEnabled = glis
+    rlEnableDepthTest();
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -303,7 +348,10 @@ void water3Main(int argc, const char** argv)
         }
         if (isShowControls && IsKeyPressed(KEY_P))
             isPaused = !isPaused;
-
+        if (isShowControls && IsKeyPressed(KEY_ZERO))
+        {
+            TakeScreenshot("screenshot.png");
+        }
         if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
             UpdateCamera(&camera, CAMERA_THIRD_PERSON);
 
@@ -320,7 +368,7 @@ void water3Main(int argc, const char** argv)
     waterUniforms.Update(shaderWater, camera, elapsedTime, deltaTime);
     ClearBackground(DARKBLUE);
         //draw reflect buffer
-        reflectBuffer.Render(GREEN, [=]() mutable {
+        reflectBuffer.Render(BLUE, [=]() mutable {
             camera.position.y *= -1;
             BeginMode3D(camera);
                 nodes.Render(NodeDrawLayer_World);
@@ -348,6 +396,7 @@ void water3Main(int argc, const char** argv)
 
         // Draw
         //----------------------------------------------------------------------------------
+        
         BeginDrawing();
          //draw scene
             BeginMode3D(camera);
@@ -383,9 +432,12 @@ void water3Main(int argc, const char** argv)
     UnloadTexture(textureTerrain);
     UnloadTexture(textureDUDV);
     UnloadTexture(textureNormalmap);
+    UnloadTexture(textureCheckedSM);
+    UnloadTexture(textureCheckedLG);
 
     UnloadMesh(meshTerrain);
     UnloadMesh(meshWaterSurface);
+    UnloadMesh(meshCube);
 
     UnloadShader(shaderWater);
     UnloadShader(shaderBase);
