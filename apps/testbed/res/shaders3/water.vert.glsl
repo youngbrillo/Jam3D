@@ -14,7 +14,7 @@ uniform mat4 matProjection;   // VS: Projection matrix
 uniform mat4 matModel;        // VS: Model matrix
 uniform mat4 matNormal;       // VS: Normal matrix
 
-const float tiling = 6.0;
+const float tiling = 4.0;
 
 void main()
 {

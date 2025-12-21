@@ -148,7 +148,8 @@ struct UniformsWater
     struct {
         int locTime = -1;
         int locMoveFactor = -1;
-        int viewPositionLoc = -1;
+        int locViewPosition= -1;
+        int locNormalMap = -1;
     } uniforms;
 
     struct {
@@ -156,11 +157,17 @@ struct UniformsWater
         float moveSpeed = 0.025f;
     } values;
 
-    void Set(Shader shader, Camera3D camera, float time, float dt)
+    void Set(Shader shader, Camera3D camera, Texture2D normalTexture, float time, float dt)
     {
         uniforms.locTime = GetShaderLocation(shader, "time");
         uniforms.locMoveFactor = GetShaderLocation(shader, "waveMoveSpeed");
-        uniforms.viewPositionLoc = GetShaderLocation(shader, "viewPosition");
+        uniforms.locViewPosition = GetShaderLocation(shader, "viewPosition");
+        uniforms.locNormalMap = GetShaderLocation(shader, "texture3");
+
+        int roughnessid = shader.locs[SHADER_LOC_MAP_ROUGHNESS];
+        shader.locs[SHADER_LOC_MAP_ROUGHNESS] = uniforms.locNormalMap;
+        //SetShaderValueTexture(shader, uniforms.locNormalMap, normalTexture);
+
         values.moveFactor = 0.0f;
 
         Update(shader, camera, time, dt);
@@ -174,7 +181,7 @@ struct UniformsWater
 
         SetShaderValue(shader, uniforms.locTime, &time, SHADER_UNIFORM_FLOAT);
         SetShaderValue(shader, uniforms.locMoveFactor, &values.moveFactor, SHADER_UNIFORM_FLOAT);
-        SetShaderValue(shader, uniforms.viewPositionLoc, &camera.position.x, SHADER_UNIFORM_VEC3);
+        SetShaderValue(shader, uniforms.locViewPosition, &camera.position.x, SHADER_UNIFORM_VEC3);
     }
 };
 
@@ -202,7 +209,11 @@ void water3Main(int argc, const char** argv)
     Image heightmap = LoadImage("heightmap.png");
     Texture2D textureTerrain = LoadTextureFromImage(heightmap);
     Texture2D textureDUDV = LoadTexture("dudv.png");
+    Texture2D textureNormalmap = LoadTexture("normal.png");
 
+    SetTextureFilter(textureTerrain, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(textureDUDV, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(textureNormalmap, TEXTURE_FILTER_BILINEAR);
 
     //meshes
     Mesh meshTerrain = GenMeshHeightmap(heightmap, Vector3{ 1, 1,1 });
@@ -259,13 +270,14 @@ void water3Main(int argc, const char** argv)
         node.meshInstance = &meshWaterSurface;
         node.material.maps[MATERIAL_MAP_DIFFUSE].color = GetColor(0xD1E5F4FF);
         node.material.maps[MATERIAL_MAP_DIFFUSE].texture = textureDUDV;
-        node.material.shader = shaderWater;
         node.material.maps[MATERIAL_MAP_SPECULAR].texture = reflectBuffer.buffer.texture;
         node.material.maps[MATERIAL_MAP_NORMAL].texture = refractBuffer.buffer.texture;
+        node.material.maps[MATERIAL_MAP_ROUGHNESS].texture = textureNormalmap;
+        node.material.shader = shaderWater;
     }
 
     UniformsWater waterUniforms;
-    waterUniforms.Set(shaderWater, camera, elapsedTime, 0);
+    waterUniforms.Set(shaderWater, camera, textureNormalmap, elapsedTime, 0);
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -288,12 +300,12 @@ void water3Main(int argc, const char** argv)
                 node.material.shader = shaderWater;
                 node.material.maps[MATERIAL_MAP_SPECULAR].texture = reflectBuffer.buffer.texture;
                 node.material.maps[MATERIAL_MAP_NORMAL].texture = refractBuffer.buffer.texture;
-
+                node.material.maps[MATERIAL_MAP_ROUGHNESS].texture = textureNormalmap;
                 //int reflectTextureLoc = GetShaderLocation(shaderWater, "reflectTexture");
                 //int refractTextureLoc = GetShaderLocation(shaderWater, "refractTexture");
                 //SetShaderValueTexture(shaderWater, reflectTextureLoc, reflectBuffer.buffer.texture);
                 //SetShaderValueTexture(shaderWater, refractTextureLoc, refractBuffer.buffer.texture);
-                waterUniforms.Set(shaderWater, camera, elapsedTime, 0);
+                waterUniforms.Set(shaderWater, camera, textureNormalmap, elapsedTime, 0);
             }
 
         }
@@ -363,8 +375,11 @@ void water3Main(int argc, const char** argv)
     }
 
     UnloadTexture(textureTerrain);
-    UnloadMesh(meshTerrain);
     UnloadTexture(textureDUDV);
+    UnloadTexture(textureNormalmap);
+
+    UnloadMesh(meshTerrain);
+    UnloadMesh(meshWaterSurface);
 
     UnloadShader(shaderWater);
     UnloadShader(shaderBase);
