@@ -1,6 +1,7 @@
 #include "modules.hpp"
 #include "jam/app/application.hpp"
 #include "jam/serialization/yaml/serializeScene.hpp"
+#include "editor/tools/fileTools.hpp"
 
 namespace fs = std::filesystem;
 
@@ -15,6 +16,13 @@ static const char* time_state_strings[] = {
 	"Custom playback speed"
 };
 static void render_scene_menu_files(jam::editor::FolderInfo & info, jam::Application & app, jam::Project & project);
+
+static std::vector<StringPair> sceneFileExtensions =
+{
+	{"Resource", "yaml"},
+	{"Res", "yml"},
+	{"Scenes", "scene"},
+};
 
 bool jam::editor::renderToolBar(jam::editor::EditorLayer& layer, jam::editor::EditorSettings& s, Scene * scene)
 {
@@ -45,18 +53,18 @@ bool jam::editor::renderToolBar(jam::editor::EditorLayer& layer, jam::editor::Ed
 
 			if (ImGui::MenuItem("Save Scene", "CTRL+LSHIFT+S"))
 			{
-				scene->Serialize();
+				//std::string saveLocation = tools::ShowSaveFileDialog(".yaml");
+				//scene->Serialize();
 			}
-			if (ImGui::MenuItem("Load Scene", "CTRL+LSHIFT+O"))
+			if (ImGui::MenuItem("Open Scene", "CTRL+LSHIFT+O"))
 			{
-				//std::string file = jam::utils::file::OpenFile(".yml \0*.yml\0");
-				//if (!file.empty())
-				//{
-				//	SceneConfig settings;
-				//	settings.name = GetFileNameWithoutExt(file.c_str());
-				//	settings.config = file;
-				//	app.SetScene(settings);
-				//}
+				std::string saveLocation = tools::ShowOpenFileDialog(".yaml");
+				if (!saveLocation.empty())
+				{
+					scene->config.configPath = saveLocation;
+					app.RestartScene();
+				}
+
 			}
 
 			if (ImGui::MenuItem("New Scene", "CTRL+N"))

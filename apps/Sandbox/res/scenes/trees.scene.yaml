@@ -1,0 +1,25 @@
+scene:
+  templateId: 0
+  id: 8AF685E8C36CE486
+  name: Trees
+  configPath: scenes/trees.scene.yaml
+  scriptPath: scenes/trees.scene.lua
+  backgroundColor: FF
+  resolution: [1280, 720]
+viewport:
+    resolution: [1280, 720]
+    rendering: true
+    visible_on_screen: false
+    backgroundColor: FF
+    default_camera:
+      position: [0, 5, 10]
+      target: [0, 0, 0]
+      type: 0
+      fov: 45
+environment:
+    skybox: [false, B212C50DD6ECFE01, A0C7A5BA7CB6466D]
+entities:
+  - entity: 
+      handle: ["tree", true, true]
+      Transform3D: [0, 0.5, 0, 1, 1, 1, 0, 0, 0, 1, 3]
+      MeshInstance3D: [0, D60AC072D6E692A3]
