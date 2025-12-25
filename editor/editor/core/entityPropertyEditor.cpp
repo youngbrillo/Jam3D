@@ -79,7 +79,7 @@ namespace jam::editor {
 		// texture drag n drop
 		ImGui::Text("Shader id : %s", component.shader_id.toString().c_str());
 
-		InspectMaterial(&component.material);
+		InspectMaterial(&component.material, &component.material_id);
 		return true;
 	}
 
