@@ -8,6 +8,9 @@
 #include <unordered_map>
 #include "editor/imgui/imgui_stdlib.h"
 #include "Jam/app/application.hpp"
+#include "editor/tools/dragResources.hpp"
+
+
 ///External | Component | Property | Function | Repository Manager
 struct ECPFRManager {
 	std::unordered_map<jam::UUID, EntityInspectionFunction> pop_up_functions;
@@ -72,7 +75,10 @@ namespace jam::editor {
 	{
 		// mesh drag n drop
 		ImGui::Text("Mesh id : %s", component.mesh_id.toString().c_str());
-
+		if (editor::tools::DragAndDropMeshRecieve(&component.mesh, component.mesh_id))
+		{
+			TraceLog(LOG_INFO, TextFormat("the mesh has changed! %s", component.mesh_id.toString().c_str()));
+		}
 		// material drag n drop
 		ImGui::Text("Material id : %s", component.material_id.toString().c_str());
 

@@ -32,3 +32,35 @@ bool jam::editor::tools::DragAndDropTextureRecieve(Texture& texture, UUID& id, c
     }
     return res;
 }
+
+bool jam::editor::tools::DragAndDropMeshGive(jam::ModelResource& resource, const char* type)
+{
+    bool res = false;
+    if (ImGui::BeginDragDropSource())
+    {
+        ImGui::SetDragDropPayload(type, &resource, sizeof(ModelResource));
+        ImGui::Text("Dragging ModelResource: %s", resource.name.c_str());
+        ImGui::EndDragDropSource();
+    }
+
+    return res;
+}
+
+bool jam::editor::tools::DragAndDropMeshRecieve(Mesh** target, UUID& id, int meshIndex, const char* type)
+{
+    bool res = false;
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(type))
+        {
+            IM_ASSERT(payload->DataSize == sizeof(ModelResource));
+            ModelResource* resource = (ModelResource*)payload->Data;
+
+            *target = &resource->res.meshes[meshIndex];
+            id = resource->id;
+            res = true;
+        }
+
+    }
+    return res;
+}

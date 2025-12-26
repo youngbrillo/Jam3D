@@ -177,9 +177,6 @@ void jam::editor::InspectTextureResource(jam::TextureResource& resource)
 		UnloadImage(img);
 	}
 
-	editor::tools::DragAndDropTextureGive(resource);
-
-
 	ImGui::Separator();
 	InspectTexture(resource.res, 150);
 }
@@ -195,6 +192,7 @@ namespace jam
 	public:
 		void render(ResourceManager& rm)
 		{
+			ImGui::SeparatorText("Textures");
 			for (auto&& [id, resource] : rm.textures)
 			{
 				if (ImGui::Selectable(resource.name.c_str(), id == s_selected_resource_id))
@@ -204,8 +202,18 @@ namespace jam
 					else
 						s_selected_resource_id = id;
 
-					//editor::tools::DragAndDropTextureGive(resource);
 				}
+				editor::tools::DragAndDropTextureGive(resource);
+
+			}
+			ImGui::SeparatorText("Meshes");
+			for (auto&& [id, resource] : rm.meshes)
+			{
+				if (ImGui::Selectable(resource.name.c_str(), id == s_selected_resource_id))
+				{
+
+				}
+				editor::tools::DragAndDropMeshGive(resource);
 			}
 
 
