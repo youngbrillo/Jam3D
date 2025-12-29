@@ -26,6 +26,7 @@ void jam::ResourceManager::Startup(std::string file)
             Resource res;
 
             res.deserialize_as_header(node);
+#if false
             if(res.id != 0 && res.type != ResourceType_Null)
                 rm.resources.emplace(res.id, res);
 
@@ -34,11 +35,38 @@ void jam::ResourceManager::Startup(std::string file)
                 res.type,
                 res.filepath.c_str()
             );
+#else
+            rm.RegisterResource(res);
+#endif
         }
     }
 
 
 
+}
+
+jam::ResourceID jam::ResourceManager::RegisterResource(Resource res)
+{
+    if (res.id == 0)
+        res.id = ResourceID();
+
+    if (res.type == ResourceType_Null)
+        return 0;
+
+    auto r_existing = resources.find(res.id);
+
+    if (r_existing != resources.end())
+        return res.id;
+
+    resources.emplace(res.id, res);
+
+    TraceLog(LOG_INFO, "[ResourceManager]\tRegistering Resource: %s [%d]\t[%s]",
+        res.id.toString().c_str(),
+        res.type,
+        res.filepath.c_str()
+    );
+
+    return res.id;
 }
 
 void jam::ResourceManager::initDefaults()
@@ -241,6 +269,56 @@ jam::ShaderResource* jam::ResourceManager::Get_Or_Shader(ResourceID existing_id,
     }
 
     return &iter->second;
+}
+
+jam::Resource jam::ResourceManager::GetResource(ResourceID id)
+{
+    auto resource_lookup = resources.find(id);
+    if (resource_lookup != resources.end())
+        return resource_lookup->second;
+
+    return Resource();
+}
+
+bool jam::ResourceManager::LoadResource(ResourceID id)
+{
+    ResourceID result_id = 0;
+
+    
+
+
+
+    return result_id != 0;
+}
+
+void jam::ResourceManager::UnloadResource(ResourceID id)
+{
+    auto rlookup = resources.find(id);
+    if (rlookup == resources.end())
+        return;
+
+    Resource& ires = rlookup->second;
+    
+    if ((ires.type & ResourceType_Texture) != 0)
+    {
+        auto* tres = Get_Texture(id);
+        tres->Unload();
+        textures.erase(id);
+    }
+
+    if ((ires.type & ResourceType_mesh) != 0)
+    {
+        auto* tres = Get_Mesh(id);
+        tres->Unload();
+        meshes.erase(id);
+    }
+
+    if ((ires.type & ResourceType_Shader) != 0)
+    {
+        auto* tres = Get_Shader(id);
+        tres->Unload();
+        shaders.erase(id);
+    }
 }
 
 jam::ResourceManager::ResourceManager()

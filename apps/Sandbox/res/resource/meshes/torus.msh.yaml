@@ -1,0 +1,12 @@
+header: [3CE77614864B4E5F, "mesh", resource/meshes/torus.msh.yaml]
+resource: 
+  id: 3CE77614864B4E5F
+  type: mesh
+  name: Torus
+  mesh:
+    type: 7
+    radius: 0.5
+    size: 1.5
+    radSeg: 16
+    sides: 16 
+  uvScale: [1, 1]

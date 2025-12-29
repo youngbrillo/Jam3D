@@ -11,6 +11,9 @@ namespace jam
 		//populate the resource repo
 		static void Startup(std::string cachefile);
 
+		//registers a resource in the resources table, does not load the resource into memory
+		ResourceID RegisterResource(Resource resource);
+
 		//initialize default resources
 		void initDefaults();
 
@@ -18,7 +21,6 @@ namespace jam
 
 		//unload all resources
 		static void Shutdown();
-
 
 		ResourceID FindResource(std::string fileOrAlias);
 
@@ -33,10 +35,16 @@ namespace jam
 		ResourceID			Load_Shader(std::string file);
 		ShaderResource*		Get_Shader(ResourceID id);
 		ShaderResource*		Get_Or_Shader(ResourceID rid, std::string fileLocation = "");
+
+		Resource GetResource(ResourceID id);
+		//loads a resource into memory (GPU), returns true if the operation is successful and the resource is valid
+		bool LoadResource(ResourceID id); 
+		void UnloadResource(ResourceID id);
 	private:
 		ResourceManager();
 		~ResourceManager();
 		ResourceManager(const ResourceManager&) = delete;
+
 		ResourceID _load_resource(std::string file, ResourceID* tracked);
 		ResourceID _load_texture(std::string file, ResourceID* tracked);
 		ResourceID _load_mesh(std::string file, ResourceID* tracked);
