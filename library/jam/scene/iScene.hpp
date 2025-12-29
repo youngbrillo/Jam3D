@@ -2,9 +2,11 @@
 #include "Jam/core/entity.hpp"
 #include "Jam/core/system.hpp"
 #include "jam/core/clock.hpp"
+#include "jam/core/resource.hpp"
 #include "Environment.hpp"
 #include <raylib.h>
 #include <functional>
+#include <vector>
 
 namespace YAML {
     class Emitter;
@@ -54,6 +56,7 @@ namespace jam
         entt::dispatcher eventDispatch;
         RenderTarget renderTarget;
         Environment worldEnv;
+        std::vector<ResourceLite> localResources;
     public:
         Scene(SceneConfig config);
         virtual ~Scene();

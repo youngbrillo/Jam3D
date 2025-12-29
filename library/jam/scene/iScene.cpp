@@ -18,7 +18,12 @@ jam::Scene::Scene(SceneConfig config_)
 
 jam::Scene::~Scene()
 {
+    auto& rm = ResourceManager::Get();
     worldEnv.skybox.Unload();
+
+    for (auto localres : localResources)
+        rm.UnloadResource(localres.id);
+
 }
 
 void jam::Scene::Begin()

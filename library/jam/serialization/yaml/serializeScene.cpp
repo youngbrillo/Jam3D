@@ -1,5 +1,6 @@
 #include "serializeScene.hpp"
 #include "serializeEntity.hpp"
+#include "jam/core/resourceManager.hpp"
 
 namespace yml = YAML;
 void jam::serialization::SerializeScene(YAML::Emitter& out, Scene* scene)
@@ -7,6 +8,7 @@ void jam::serialization::SerializeScene(YAML::Emitter& out, Scene* scene)
 	out << yml::BeginMap;
 		SerializeSceneConfig(out, scene->config);
 		SerializeRenderTarget(out, scene->renderTarget);
+		SerializeScene_Resources(out, scene);
 		scene->worldEnv.serialize(out);
 		SerializeScene_Entities(out, scene);
 	out << yml::EndMap;
@@ -41,6 +43,10 @@ void jam::serialization::SerializeScene_Entities(YAML::Emitter& out, Scene* scen
 {
 }
 
+void jam::serialization::SerializeScene_Resources(YAML::Emitter& out, Scene* scene)
+{
+}
+
 void jam::serialization::DeserializeScene(YAML::Node root, Scene* scene)
 {
 	if (!root)
@@ -50,6 +56,7 @@ void jam::serialization::DeserializeScene(YAML::Node root, Scene* scene)
 	}
 	DeserializeSceneConfig(root["scene"], scene->config);
 	DeserializeRenderTarget(root["viewport"], scene->renderTarget);
+	DeserializeScene_Resources(root["resources"], scene);
 	scene->worldEnv.deserialize(root["environment"]);
 	DeserializeScene_Entities(root["entities"], scene);
 }
@@ -89,5 +96,30 @@ void jam::serialization::DeserializeScene_Entities(YAML::Node in, Scene* scene)
 		Entity e(scene->world.create(), scene->world);
 		DeserializeEntity(node, e);
 	}
+}
+
+void jam::serialization::DeserializeScene_Resources(YAML::Node in, Scene* scene)
+{
+	if (!in)
+		return;
+
+	auto& rm = ResourceManager::Get();
+
+	for (auto resourceNode : in)
+	{
+		auto node = resourceNode["res"];
+		Resource res;
+		ResourceLite resLite;
+		res.deserialize_as_header(node);
+
+		resLite.id = rm.RegisterResource(res);
+		resLite.type = res.type;
+
+		if (resLite.id != 0) {
+			scene->localResources.emplace_back(resLite);
+			rm.LoadResource(resLite.id);
+		}
+	}
+
 }
 
