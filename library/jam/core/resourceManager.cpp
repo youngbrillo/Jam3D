@@ -146,7 +146,7 @@ jam::TextureResource* jam::ResourceManager::Get_Or_LoadTexture(ResourceID existi
             }
             else
             {
-                TraceLog(LOG_ERROR, "[ResourceManager]\t Could not find a resource with ID: '%s' | %llu.", existing_id.toString(), existing_id.toUint64());
+                TraceLog(LOG_ERROR, "[ResourceManager]\t Could not find a resource with ID: '%s' | %llu.", existing_id.toString().c_str(), existing_id.toUint64());
                 return &textures.at(_default_res_id);
                 //return nullptr;
             }
@@ -201,7 +201,7 @@ jam::ModelResource* jam::ResourceManager::Get_Or_LoadMesh(ResourceID existing_id
             }
             else
             {
-                TraceLog(LOG_ERROR, "[ResourceManager]\t Could not find a resource with ID: '%s' | %llu.", existing_id.toString(), existing_id.toUint64());
+                TraceLog(LOG_ERROR, "[ResourceManager]\t Could not find a resource with ID: '%s' | %llu.", existing_id.toString().c_str(), existing_id.toUint64());
                 return &meshes.at(_default_res_id);
                 //return nullptr;
             }
@@ -251,7 +251,7 @@ jam::ShaderResource* jam::ResourceManager::Get_Or_Shader(ResourceID existing_id,
             }
             else
             {
-                TraceLog(LOG_ERROR, "[ResourceManager]\t Could not find a resource with ID: '%s' | %llu.", existing_id.toString(), existing_id.toUint64());
+                TraceLog(LOG_ERROR, "[ResourceManager]\t Could not find a resource with ID: '%s' | %llu.", existing_id.toString().c_str(), existing_id.toUint64());
                 return nullptr;
             }
         }

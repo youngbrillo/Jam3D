@@ -16,6 +16,14 @@ viewport:
       target: [0, 0, 0]
       type: 0
       fov: 45
+resources:
+# models:
+  - res: [56B22F4613929010, "mesh", resource/meshes/grass_plane.msh.yaml]
+# textures:
+  - res: [4A343406A9B944C6, "texture", resource/textures/gradient.txtr.yaml]
+  - res: [59C08E27A30E3792, "texture", resource/textures/perlin-noise.txtr.yaml]
+# shaders:
+  - res: [B212C50DD6ECFE01, "shader", resource/shaders/skybox.shdr.yaml]
 environment:
     skybox: [true, B212C50DD6ECFE01, A0C7A5BA7CB6466D]
     lighting:

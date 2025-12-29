@@ -16,10 +16,10 @@ activeTemplate: 0
 scene:
   templateId: 0
   id: 8AF685E8C36CE486
-  name: Main Scene
-  configPath: scenes/main.scene.yaml
-  scriptPath: scenes/main.scene.lua
-  backgroundColor: 5E7D3EFF
+  name: Trees
+  configPath: scenes/trees.scene.yaml
+  scriptPath: scenes/trees.scene.lua
+  backgroundColor: FF
   resolution: [1280, 720]
 audio:
   masterVolume: 1
