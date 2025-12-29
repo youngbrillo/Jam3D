@@ -62,7 +62,7 @@ bool jam::editor::renderToolBar(jam::editor::EditorLayer& layer, jam::editor::Ed
 				if (!saveLocation.empty())
 				{
 					scene->config.configPath = saveLocation;
-					app.RestartScene();
+					app.SetScene(scene->config);
 				}
 
 			}
@@ -139,6 +139,7 @@ bool jam::editor::renderToolBar(jam::editor::EditorLayer& layer, jam::editor::Ed
 				NAV_TOGGLE_OPTION_FUNCTION("Viewport", s.viewPortVisible)
 				NAV_TOGGLE_OPTION_FUNCTION("Entity Properties", s.entityInspectorVisible)
 				NAV_TOGGLE_OPTION_FUNCTION("Console", s.consoleVisible)
+				NAV_TOGGLE_OPTION_FUNCTION("Resources", s.resourceInspectorVisible)
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
