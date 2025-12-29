@@ -98,6 +98,12 @@ namespace jam
 	};
 	Mesh MeshGenParam_Generate(const MeshGenParam& generator);
 
+	struct ResourceLite
+	{
+		ResourceID id = 0;
+		int type = ResourceType::ResourceType_Null;
+	};
+
 	struct Resource
 	{
 		ResourceID id = 0;
