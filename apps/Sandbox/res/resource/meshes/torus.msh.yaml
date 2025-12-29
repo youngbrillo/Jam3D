@@ -6,7 +6,7 @@ resource:
   mesh:
     type: 7
     radius: 0.5
-    size: 1.5
+    size: 1
     radSeg: 32
     sides: 32 
   uvScale: [1, 1]
