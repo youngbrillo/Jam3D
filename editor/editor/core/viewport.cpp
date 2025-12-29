@@ -7,9 +7,9 @@ bool jam::editor::renderViewport(bool* _viewPortVisible, Scene* scene)
 	ImGui::Begin("viewport", _viewPortVisible, ImGuiWindowFlags_::ImGuiWindowFlags_None);
 	ImVec2 viewportSize = ImGui::GetContentRegionAvail();
 	ImVec2 winSize = ImGui::GetWindowSize();
-	ImTextureID tid = scene->renderTarget.target.texture.id;
+	ImTextureID tid = scene->viewport.renderTarget.target.texture.id;
 
-	float imageAspectRatio = scene->renderTarget.resolution.x / scene->renderTarget.resolution.y;
+	float imageAspectRatio = scene->viewport.renderTarget.resolution.x / scene->viewport.renderTarget.resolution.y;
 	float viewportAspectRatio = viewportSize.x / viewportSize.y;
 
 	//scall horizontally if region is > than the image

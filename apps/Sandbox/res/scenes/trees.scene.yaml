@@ -12,14 +12,15 @@ viewport:
     visible_on_screen: false
     backgroundColor: FF
     default_camera:
-      position: [0, 5, 10]
+      position: [-14, 7, 20]
       target: [0, 0, 0]
-      type: 0
+      projection: 0
       fov: 45
+      mode: 4
 resources:
   - res: [3CE77614864B4E5F, "mesh", resource/meshes/torus.msh.yaml]
 environment:
-    skybox: [false, B212C50DD6ECFE01, A0C7A5BA7CB6466D]
+    skybox: [true, B212C50DD6ECFE01, A0C7A5BA7CB6466D]
 entities:
   - entity: 
       handle: ["tree", true, true]

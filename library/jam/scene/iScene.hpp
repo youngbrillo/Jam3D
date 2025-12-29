@@ -46,6 +46,22 @@ namespace jam
         void End() const;
     };
 
+    struct Viewport
+    {
+        RenderTarget renderTarget;
+        Camera3D camera;
+        int cameraMode = CAMERA_FREE;
+
+        Viewport() = default;
+        Viewport(Vector2 Resolution) : renderTarget(Resolution), camera(Camera3D{
+            .position = {0, 10, 10},
+            .target = {0,0,0},
+            .up = {0, 1, 0},
+            .fovy = 75.0f,
+            .projection = CAMERA_PERSPECTIVE
+            }), cameraMode(CAMERA_FREE) {}
+    };
+
     class Scene
     {
     public:
@@ -54,7 +70,7 @@ namespace jam
         SystemManager systemManager;
         entt::registry world;
         entt::dispatcher eventDispatch;
-        RenderTarget renderTarget;
+        Viewport viewport;
         Environment worldEnv;
         std::vector<ResourceLite> localResources;
     public:

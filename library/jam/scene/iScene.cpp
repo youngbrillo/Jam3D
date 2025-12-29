@@ -12,7 +12,7 @@ using namespace jam::components;
 
 jam::Scene::Scene(SceneConfig config_)
     : config(config_)
-    , renderTarget(config_.resolution)
+    , viewport(config_.resolution)
 {
 }
 
@@ -42,6 +42,7 @@ void jam::Scene::End()
 {
     this->onEnd();
 
+#if false
     //recycle editor camera if editor camera is used...
     components::EditorCamera temp;
     bool useTemp = false;
@@ -50,13 +51,16 @@ void jam::Scene::End()
         temp = world.ctx().get<components::EditorCamera>();
         useTemp = true;
     }
+#endif
     world.clear();
     world = entt::registry();
 
+#if false
     if (useTemp)
     {
         world.ctx().emplace<components::EditorCamera>(temp);
     }
+#endif
 }
 
 void jam::Scene::Poll()
@@ -80,10 +84,10 @@ void jam::Scene::FixedUpdate(const jam::Clock& time)
 
 void jam::Scene::Render()
 {
-    if (renderTarget.enabled)
+    if (viewport.renderTarget.enabled)
     {
         this->RenderToCanvas();
-        renderTarget.Render();
+        viewport.renderTarget.Render();
     }
     else
     {
@@ -130,9 +134,9 @@ void jam::Scene::RenderContent()
 
 void jam::Scene::RenderToCanvas()
 {
-    renderTarget.Begin(this->config.backgroundColor);
+    viewport.renderTarget.Begin(this->config.backgroundColor);
     RenderContent();
-    renderTarget.End();
+    viewport.renderTarget.End();
 }
 
 void jam::Scene::Serialize()
@@ -211,7 +215,7 @@ Camera3D& jam::Scene::GetCamera()
     {
         return cam.camera;
     }
-
+#if false
     if (!world.ctx().contains<EditorCamera>())
     {
         world.ctx().emplace<EditorCamera>();
@@ -219,18 +223,28 @@ Camera3D& jam::Scene::GetCamera()
     EditorCamera& cam = world.ctx().emplace<EditorCamera>();
     cam.Update();
     return cam.camera.camera;
+#else
+
+    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+    {
+        UpdateCamera(&viewport.camera, viewport.cameraMode);
+    }
+
+
+    return viewport.camera;
+#endif
 }
 
 void jam::Scene::SetResolution(Vector2 resoulution)
 {
     config.resolution = resoulution;
-    renderTarget.Resize(resoulution);
+    viewport.renderTarget.Resize(resoulution);
 }
 
 Vector2 jam::Scene::GetRenderDimensions() const
 {
-    if (renderTarget.enabled)
-        return renderTarget.resolution;
+    if (viewport.renderTarget.enabled)
+        return viewport.renderTarget.resolution;
     return Vector2{(float)GetScreenWidth(), (float)GetScreenHeight()};
 }
 

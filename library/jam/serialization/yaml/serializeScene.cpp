@@ -7,7 +7,7 @@ void jam::serialization::SerializeScene(YAML::Emitter& out, Scene* scene)
 {
 	out << yml::BeginMap;
 		SerializeSceneConfig(out, scene->config);
-		SerializeRenderTarget(out, scene->renderTarget);
+		SerializeViewport(out, scene->viewport);
 		SerializeScene_Resources(out, scene);
 		scene->worldEnv.serialize(out);
 		SerializeScene_Entities(out, scene);
@@ -30,12 +30,19 @@ void jam::serialization::SerializeSceneConfig(YAML::Emitter& out, SceneConfig& d
 	out << yml::EndMap;
 }
 
-void jam::serialization::SerializeRenderTarget(YAML::Emitter& out, RenderTarget& rt)
+void jam::serialization::SerializeViewport(YAML::Emitter& out, Viewport& rt)
 {
 	out << yml::Key << "viewport" << yml::BeginMap
-		<< yml::Key << "resoulution" << rt.resolution
-		<< yml::Key << "rendering" << rt.enabled
-		<< yml::Key << "visible_on_screen" << rt.visible
+		<< yml::Key << "resoulution" << rt.renderTarget.resolution
+		<< yml::Key << "rendering" << rt.renderTarget.enabled
+		<< yml::Key << "visible_on_screen" << rt.renderTarget.visible
+		<< yml::Key << "default_camera" << yml::BeginMap
+			<< yml::Key << "position" << rt.camera.position
+			<< yml::Key << "target" << rt.camera.target
+			<< yml::Key << "projection" << rt.camera.projection
+			<< yml::Key << "fov" << rt.camera.fovy
+			<< yml::Key << "mode" << rt.cameraMode
+		<<yml::EndMap
 	<< yml::EndMap;
 }
 
@@ -55,7 +62,7 @@ void jam::serialization::DeserializeScene(YAML::Node root, Scene* scene)
 		return;
 	}
 	DeserializeSceneConfig(root["scene"], scene->config);
-	DeserializeRenderTarget(root["viewport"], scene->renderTarget);
+	DeserializeViewport(root["viewport"], scene->viewport);
 	DeserializeScene_Resources(root["resources"], scene);
 	scene->worldEnv.deserialize(root["environment"]);
 	DeserializeScene_Entities(root["entities"], scene);
@@ -74,13 +81,22 @@ void jam::serialization::DeserializeSceneConfig(YAML::Node in, SceneConfig& conf
 	readValueEx(in["resolution"], &config.resolution);
 }
 
-void jam::serialization::DeserializeRenderTarget(YAML::Node in, RenderTarget& rt)
+void jam::serialization::DeserializeViewport(YAML::Node in, Viewport& rt)
 {
 	if (!in)
 		return;
-	readValueEx(in["resolution"], &rt.resolution);
-	readValueEx(in["rendering"], &rt.enabled);
-	readValueEx(in["visible_on_screen"], &rt.visible);
+	readValueEx(in["resolution"], &rt.renderTarget.resolution);
+	readValueEx(in["rendering"], &rt.renderTarget.enabled);
+	readValueEx(in["visible_on_screen"], &rt.renderTarget.visible);
+
+	if (auto camNode = in["default_camera"])
+	{
+		readValueEx(camNode["position"], &rt.camera.position);
+		readValueEx(camNode["target"], &rt.camera.target);
+		readValueEx(camNode["projection"], &rt.camera.projection);
+		readValueEx(camNode["fov"], &rt.camera.fovy);
+		readValueEx(camNode["mode"], &rt.cameraMode);
+	}
 
 }
 

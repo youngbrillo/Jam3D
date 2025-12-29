@@ -301,23 +301,33 @@ void jam::ResourceManager::UnloadResource(ResourceID id)
     
     if ((ires.type & ResourceType_Texture) != 0)
     {
-        auto* tres = Get_Texture(id);
-        tres->Unload();
-        textures.erase(id);
+        if (auto* tres = Get_Texture(id)) {
+            auto* dres = Get_Texture(_default_res_id);
+            if (dres != tres)
+                tres->Unload();
+
+            textures.erase(id);
+        }
     }
 
     if ((ires.type & ResourceType_mesh) != 0)
     {
-        auto* tres = Get_Mesh(id);
-        tres->Unload();
-        meshes.erase(id);
+        if (auto* tres = Get_Mesh(id))
+        {
+            auto* dres = Get_Mesh(_default_res_id);
+            if (dres != tres)
+                tres->Unload();
+
+            meshes.erase(id);
+        }
     }
 
     if ((ires.type & ResourceType_Shader) != 0)
     {
-        auto* tres = Get_Shader(id);
-        tres->Unload();
-        shaders.erase(id);
+        if (auto* tres = Get_Shader(id)) {
+            tres->Unload();
+            shaders.erase(id);
+        }
     }
 }
 

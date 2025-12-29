@@ -11,6 +11,14 @@ namespace jam::editor {
 	static bool Inspect_EntityOnTree(Entity e, Entity& ref, Scene* scene);
 	static bool Scene_create_entity_type_menu(Scene* scene, Entity& ref);
 	static bool Scene_config_menu(Scene* scene);
+
+	static const char* cameraModeList[] = {
+		"DISABLED",
+		"FREE",
+		"ORBITAL",
+		"FIRST PERSON",
+		"THRID PERSON",
+	};
 }
 
 bool jam::editor::renderSceneHierarchy(bool* isVisible, Scene* scene, Entity& selected)
@@ -24,7 +32,27 @@ bool jam::editor::renderSceneHierarchy(bool* isVisible, Scene* scene, Entity& se
 		Inspect_SceneConfig(&scene->config);
 		//ImGui::TreePop();}
 	ImGui::SeparatorText("viewport");
-		Inspect_RenderTarget(&scene->renderTarget);
+	if (ImGui::TreeNode("camera"))
+	{
+		ImGui::DragFloat3("position", &scene->viewport.camera.position.x, 0.1f);
+		ImGui::DragFloat3("target", &scene->viewport.camera.target.x, 0.1f);
+		ImGui::DragFloat3("up", &scene->viewport.camera.up.x, 0.1f);
+		ImGui::DragFloat("FOV", &scene->viewport.camera.fovy, 1.0f);
+		if (ImGui::RadioButton("Perspective", scene->viewport.camera.projection == CAMERA_PERSPECTIVE))
+		{
+			scene->viewport.camera.projection = CAMERA_PERSPECTIVE;
+		}
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Orthographic", scene->viewport.camera.projection == CAMERA_ORTHOGRAPHIC))
+		{
+			scene->viewport.camera.projection = CAMERA_ORTHOGRAPHIC;
+		}
+
+		ImGui::SliderInt("Camera Mode", &scene->viewport.cameraMode, CAMERA_CUSTOM, CAMERA_THIRD_PERSON, cameraModeList[scene->viewport.cameraMode]);
+
+		ImGui::TreePop();
+	}
+		Inspect_RenderTarget(&scene->viewport.renderTarget);
 	ImGui::SeparatorText("environment");
 		Inspect_Environment(&scene->worldEnv);
 

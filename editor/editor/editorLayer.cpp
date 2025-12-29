@@ -124,7 +124,7 @@ void jam::editor::EditorLayer::render()
 
 	if (editor::renderViewport(&settings.viewPortVisible, sceneRef))
 	{
-		sceneRef->renderTarget.enabled = false;
+		sceneRef->viewport.renderTarget.enabled = false;
 	}
 
 
