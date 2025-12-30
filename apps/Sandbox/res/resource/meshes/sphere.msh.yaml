@@ -1,0 +1,11 @@
+header: [e3aa4543e340422e, "mesh", resource/meshes/sphere.msh.yaml]
+resource: 
+  id: e3aa4543e340422e
+  type: mesh
+  name: Sphere
+  mesh:
+    type: 3
+    radius: 0.5
+    rings: 32
+    slices: 32 
+  uvScale: [1, 1]

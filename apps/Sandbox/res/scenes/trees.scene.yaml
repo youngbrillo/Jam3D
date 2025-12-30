@@ -19,6 +19,7 @@ viewport:
       mode: 4
 resources:
   - res: [3CE77614864B4E5F, "mesh", resource/meshes/torus.msh.yaml]
+  - res: [E3AA4543E340422E, "mesh", resource/meshes/sphere.msh.yaml]
 environment:
     skybox: [true, B212C50DD6ECFE01, A0C7A5BA7CB6466D]
 entities:
@@ -33,4 +34,4 @@ entities:
   - entity: 
       handle: [sphere, true, true]
       Transform3D: [4, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1]
-      MeshInstance3D: [0, D60AC072D6E692A3]
+      MeshInstance3D: [E3AA4543E340422E, D60AC072D6E692A3]
