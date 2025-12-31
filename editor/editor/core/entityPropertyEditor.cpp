@@ -75,7 +75,7 @@ namespace jam::editor {
 	{
 		// mesh drag n drop
 		ImGui::Text("Mesh id : %s", component.mesh_id.toString().c_str());
-		if (editor::tools::DragAndDropMeshRecieve(&component.mesh, component.mesh_id))
+		if (editor::tools::DragAndDropMeshRecieve(&component.mesh, component.mesh_id, &component.material))
 		{
 			TraceLog(LOG_INFO, TextFormat("the mesh has changed! %s", component.mesh_id.toString().c_str()));
 		}

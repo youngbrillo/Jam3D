@@ -46,7 +46,7 @@ bool jam::editor::tools::DragAndDropMeshGive(jam::ModelResource& resource, const
     return res;
 }
 
-bool jam::editor::tools::DragAndDropMeshRecieve(Mesh** target, UUID& id, int meshIndex, const char* type)
+bool jam::editor::tools::DragAndDropMeshRecieve(Mesh** target, UUID& id, Material* material, int meshIndex, const char* type)
 {
     bool res = false;
     if (ImGui::BeginDragDropTarget())
@@ -58,6 +58,13 @@ bool jam::editor::tools::DragAndDropMeshRecieve(Mesh** target, UUID& id, int mes
 
             *target = &resource->res.meshes[meshIndex];
             id = resource->id;
+
+            if (material && resource->res.materials[0].maps[0].texture.id != 1)
+            {
+                //copy material ..
+                material->maps[0].texture = resource->res.materials[0].maps[0].texture;
+            }
+
             res = true;
         }
 

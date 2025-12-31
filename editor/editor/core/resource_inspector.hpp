@@ -10,4 +10,7 @@ namespace jam::editor
 	void InspectMaterial(Material* material, UUID* resouceID);
 	void InspectMaterialMap(const char* label, MaterialMap& materialMap, UUID* resouceID);
 	void InspectTextureResource(jam::TextureResource& resource);
+
+
+	void InspectModelResource(jam::ModelResource& resource);
 }

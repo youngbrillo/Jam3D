@@ -2,9 +2,11 @@
 #include "modules.hpp"
 #include "jam/core/resourceManager.hpp"
 #include "modules.hpp"
+#include "editor/imgui/imgui_stdlib.h"
 #include "editor/rlImgui/rlImGui.h"
 #include "editor/editor.hpp"
 #include "editor/tools/dragResources.hpp"
+#include "editor/tools/fileTools.hpp"
 
 void jam::editor::ShowSetTextureFilter(const Texture& texture)
 {
@@ -103,10 +105,19 @@ static bool InspectImageGenParam(jam::ImageGenParam& p)
 		ImGui::DragInt("Tile size", &p.tileSize);
 		break;
 	case jam::ImagePrimative_Text:
+		ImGui::InputText("text", &p.text);
 		break;
 	case jam::ImagePrimative_Import:
-		break;
 	case jam::ImagePrimative_CubeMap:
+		ImGui::InputText("file path###ImgGen", &p.filepath);
+		ImGui::SameLine();
+		if (ImGui::Button("Open###ImgGen"))
+		{
+			std::string openLoc = jam::editor::tools::ShowOpenFileDialog("");
+			if (!openLoc.empty()) {
+				p.filepath = openLoc;
+			}
+		}
 		break;
 	case jam::ImagePrimative_null:
 	default:
@@ -117,6 +128,87 @@ static bool InspectImageGenParam(jam::ImageGenParam& p)
 
 	return ImGui::Button("Regenerate");
 }
+
+static const char* s_MeshPrimative_Names[] = {
+	"Poly",
+	"Plane",
+	"Cube",
+	"Sphere",
+	"Hemisphere",
+	"Cylinder",
+	"Cone",
+	"Torus",
+	"Knot",
+	"Heightmap",
+	"Cubicmap",
+	"Import",
+};
+
+static bool InspectMeshGenParam(jam::MeshGenParam& p)
+{
+	ImGui::Combo("type###mesh_primative", &p.type, s_MeshPrimative_Names, 12);
+	bool canGen = false;
+	switch (p.type)
+	{
+	case jam::MeshPrimative_Poly:
+		ImGui::DragInt("sides", &p.sides);
+		ImGui::DragFloat("radius", &p.radius);
+		break;
+	case jam::MeshPrimative_Plane:
+		ImGui::DragFloat("width", &p.width);
+		ImGui::DragFloat("height", &p.height);
+		ImGui::DragInt("res X", &p.resX);
+		ImGui::DragInt("res Y", &p.resY);
+		break;
+	case jam::MeshPrimative_Cube:
+		ImGui::DragFloat("width", &p.width);
+		ImGui::DragFloat("height", &p.height);
+		ImGui::DragFloat("length", &p.length);
+		break;
+	case jam::MeshPrimative_Sphere:
+	case jam::MeshPrimative_HemiSphere:
+		ImGui::DragFloat("radius", &p.radius);
+		ImGui::DragInt("rings", &p.rings);
+		ImGui::DragInt("slices", &p.slices);
+		break;
+	case jam::MeshPrimative_Cylinder:
+	case jam::MeshPrimative_Cone:
+		ImGui::DragFloat("radius", &p.radius);
+		ImGui::DragFloat("height", &p.height);
+		ImGui::DragInt("slices", &p.slices);
+		break;
+	case jam::MeshPrimative_Torus:
+	case jam::MeshPrimative_Knot:
+		ImGui::DragFloat("radius", &p.radius);
+		ImGui::DragFloat("size", &p.size);
+		ImGui::DragInt("radSeg", &p.radSeg);
+		ImGui::DragInt("sides", &p.sides);
+		break;
+	case jam::MeshPrimative_Heightmap:
+	case jam::MeshPrimative_Cubicmap:
+		canGen = InspectImageGenParam(p.imageGenParameters);
+		break;
+	case jam::MeshPrimative_Import:
+		ImGui::InputText("file path###MeshGenInput", &p.filepath);
+		ImGui::SameLine();
+		if (ImGui::Button("Open###MeshGenButton"))
+		{
+			std::string openLoc = jam::editor::tools::ShowOpenFileDialog("");
+			if (!openLoc.empty()) {
+				p.filepath = openLoc;
+			}
+		}
+		break;
+	case jam::MeshPrimative_null:
+	default:
+		break;
+	}
+
+	canGen = canGen || ImGui::Button("Generate Mesh");
+
+	return canGen;
+}
+
 
 void jam::editor::InspectMesh(Mesh* mesh)
 {
@@ -181,9 +273,35 @@ void jam::editor::InspectTextureResource(jam::TextureResource& resource)
 	InspectTexture(resource.res, 150);
 }
 
-const static jam::UUID c_null_resource_id= 99;
+void jam::editor::InspectModelResource(jam::ModelResource& resource)
+{
+	if (InspectMeshGenParam(resource.parameters))
+	{
+
+		if (resource.parameters.type == MeshPrimative_Import)
+		{
+			resource.Load(resource.parameters.filepath);
+		}
+		else
+		{
+			Mesh m = MeshGenParam_Generate(resource.parameters);
+			resource.Load(m);
+		}
+
+
+	}
+
+	ImGui::Separator();
+
+	if(IsModelValid(resource.res))
+		InspectMesh(&resource.res.meshes[0]);
+}
+
+const static jam::UUID c_null_resource_id = 99;
+const static jam::UUID c_null_resource_mesh_id= 99;
 
 static jam::UUID s_selected_resource_id = c_null_resource_id;
+static jam::UUID s_selected_mesh_resource_id = c_null_resource_id;
 
 namespace jam
 {
@@ -209,9 +327,12 @@ namespace jam
 			ImGui::SeparatorText("Meshes");
 			for (auto&& [id, resource] : rm.meshes)
 			{
-				if (ImGui::Selectable(resource.name.c_str(), id == s_selected_resource_id))
+				if (ImGui::Selectable(resource.name.c_str(), id == s_selected_mesh_resource_id))
 				{
-
+					if (s_selected_mesh_resource_id == id)
+						s_selected_mesh_resource_id = c_null_resource_id;
+					else
+						s_selected_mesh_resource_id = id;
 				}
 				editor::tools::DragAndDropMeshGive(resource);
 			}
@@ -223,6 +344,13 @@ namespace jam
 
 				editor::InspectTextureResource(res);
 			}
+			if (s_selected_mesh_resource_id  != c_null_resource_id)
+			{
+				auto& res = rm.meshes[s_selected_mesh_resource_id ];
+
+				editor::InspectModelResource(res);
+			}
+
 
 		}
 	};
